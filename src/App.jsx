@@ -5,7 +5,7 @@ import { UserProvider } from './contexts/UserContext.js';
 import Layout from './Layout.jsx';
 import { useState } from 'react';
 const router = createBrowserRouter(
-  createRoutesFromElements(
+  createRoutesFromElements(  
     <Route path='/' element={<Layout />}>
       <Route path='' element={
         <div className="flex w-full">
