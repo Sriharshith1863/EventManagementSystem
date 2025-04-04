@@ -11,7 +11,7 @@ function MyTickets() {
     // eslint-disable-next-line
   }, []);
   return (
-    <div className="bg-gray-800">MyTickets</div>
+    <div className="bg-gray-800 p-4">MyTickets</div>
   )
 }
 

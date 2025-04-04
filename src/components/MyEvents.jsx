@@ -11,7 +11,7 @@ function MyEvents() {
       // eslint-disable-next-line
     }, []);
   return (
-    <div>MyEvents</div>
+    <div className="bg-gray-800 p-4">MyEvents</div>
   )
 }
 
