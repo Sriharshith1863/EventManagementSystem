@@ -56,19 +56,19 @@ const router = createBrowserRouter(
           <div className="absolute top-1/2 left-1/4 w-40 h-40 bg-indigo-600/5 rounded-full blur-lg"></div>
           
           {/* Content container */}
-          <div className="z-10 flex flex-col md:flex-row gap-8 w-full max-w-5xl">
+          <div className="z-10 flex flex-col md:flex-row gap-8 w-full max-w-8xl">
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 text-center">Event Management System</h1>
-              <p className="text-gray-300 text-center mb-6 max-w-md">Your complete solution for event planning, ticketing, and management. Sign in to get started.</p>
-              <div className="w-full max-w-md">
+              <p className="text-gray-300 text-center mb-6">Your complete solution for event planning, ticketing, and management. Sign in to get started.</p>
+              <div className="w-full">
                 <Login type="org" />
               </div>
             </div>
             
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
               <h2 className="text-2xl font-semibold text-white mb-4 text-center">Attending an Event?</h2>
-              <p className="text-gray-300 text-center mb-6 max-w-md">Log in to access your tickets, view upcoming events, and manage your profile.</p>
-              <div className="w-full max-w-md">
+              <p className="text-gray-300 text-center mb-6">Log in to access your tickets, view upcoming events, and manage your profile.</p>
+              <div className="w-full">
                 <Login type="usr" />
               </div>
             </div>
@@ -83,19 +83,19 @@ const router = createBrowserRouter(
           <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-indigo-600/5 rounded-full blur-lg"></div>
           
           {/* Content container */}
-          <div className="z-10 flex flex-col md:flex-row gap-8 w-full max-w-5xl">
+          <div className="z-10 flex flex-col md:flex-row gap-8 w-full max-w-8xl">
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 text-center">Create an Account</h1>
-              <p className="text-gray-300 text-center mb-6 max-w-md">Register as an event organizer to create and manage your own events.</p>
-              <div className="w-full max-w-md">
+              <p className="text-gray-300 text-center mb-6">Register as an event organizer to create and manage your own events.</p>
+              <div className="w-full">
                 <SignUp type="org" />
               </div>
             </div>
             
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
               <h2 className="text-2xl font-semibold text-white mb-4 text-center">Attendee Registration</h2>
-              <p className="text-gray-300 text-center mb-6 max-w-md">Sign up to discover events, purchase tickets, and join the community.</p>
-              <div className="w-full max-w-md">
+              <p className="text-gray-300 text-center mb-6">Sign up to discover events, purchase tickets, and join the community.</p>
+              <div className="w-full">
                 <SignUp type="usr" />
               </div>
             </div>
