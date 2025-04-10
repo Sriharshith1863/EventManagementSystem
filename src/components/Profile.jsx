@@ -1,151 +1,9 @@
-// import React, { useEffect, useState } from 'react'
-// import { useNavigate } from 'react-router-dom';
-// import { useUserContext } from '../contexts'
-
-// function Profile() {
-//   const {username, isLoggedIn} = useUserContext();
-//   const [email, setEmail] = useState("");
-//   const [phoneNo, setPhoneNo] = useState("");
-//   const [isEditable, setIsEditable] = useState(false);
-//   const [message, setMessage] = useState("");
-//   const [color, setColor] = useState("text-red-500");
-//   const [dob, setDob] = useState("");
-//   const navigate= useNavigate();
-
-
-//   const displayMessage = (messageToDisplay, colorToDisplay) => {
-//     setMessage(messageToDisplay);
-//     setColor(colorToDisplay);
-//     setTimeout(() => {
-//       setMessage("");
-//       setColor("");
-//     }, 3000);
-//   }
-
-//   useEffect(() => {
-//     if(!isLoggedIn) {
-//       navigate('/signUp');
-//     }
-//     const loadDetails = JSON.parse(localStorage.getItem(username));
-//     if(!loadDetails) {
-//       navigate('/signUp');
-//     }
-//     if(loadDetails.email) {
-//       setEmail(loadDetails.email);
-//     }
-//     if(loadDetails.phoneNumber) {
-//       setPhoneNo(loadDetails.phoneNumber);
-//     }
-//     if(loadDetails.dob) {
-//       setDob(loadDetails.dob);
-//     }
-//   },[]);
-
-//   const editProfile = (e) => {
-//     e.preventDefault();
-//     if(isEditable) {
-//       let userDetails = localStorage.getItem(username);
-//       if(!userDetails) {
-//         displayMessage("something went wrong...", "text-red-500");
-//       }
-//       else {
-//         userDetails = JSON.parse(userDetails);
-//         localStorage.setItem(username, JSON.stringify({...userDetails, email: email, phoneNumber: phoneNo}));
-//         setIsEditable(false);
-//         displayMessage("profile successfully edited!!", "text-green-500");
-//       }
-//     }
-//     else {
-//       setIsEditable((prev) => !prev);
-//     }
-//   }
-
-
-//   return (
-//     <div className="bg-gray-800 text-white">
-//       <p className={`text-center ${color}`}>{message}</p>
-
-
-//       <div className="flex flex-col justify-end max-w-1/5">
-//         <img src="/defaultAvatar.webp" alt='avatar' className="max-h-80"/>
-//         <button className="bg-gray-900 p-2 rounded-md my-2 mx-8">upload Photo</button>
-//       </div>
-
-
-//       <form className="bg-gray-700 m-3 rounded-lg" onSubmit={editProfile}>
-//         <div className="flex flex-col">
-//         <div className="flex justify-between">
-
-//           <label htmlFor="username" className="mt-4 mx-4">Username </label>
-//           <button
-//           className="bg-gray-800 p-2 rounded-md mx-4 mt-4"
-//           type="submit"
-//           >{isEditable? "Save Profile": "Edit Profile"}
-//           </button>
-
-//         </div>
-
-//         <input
-//         type="text"
-//         value={username.substring(0,username.length-3)}
-//         readOnly={true}
-//         className={`px-4 pb-2  mx-2 mb-2 outline-none text-gray-300`}
-//         />
-//         </div>
-
-
-//         <div className="flex flex-col">
-//         <label htmlFor="email" className="m-4 mx-4">Email Id </label>
-//         <input
-//         type="email"
-//         value={email}
-//         onChange={(e) => {setEmail(e.target.value)}} //TODO: validate the field properly on server side
-//         placeholder="123@gmail.com"
-//         readOnly={!isEditable}
-//         required={true}
-//         className={`px-4 pb-2  mx-2 mb-2 outline-none text-gray-300 ${isEditable? "border-2 border-blue-500 focus:ring-2 focus:ring-blue-500" : ""}`}
-//         />
-//         </div>
-
-//         <div className="flex flex-col">
-//         <label htmlFor="dob" className="m-4 mx-4">Date of Birth </label>
-//         <input
-//         type="date"
-//         value={dob}
-//         onChange={(e) => {setDob(e.target.value)}} //TODO: validate the field properly on server side
-//         readOnly={!isEditable}
-//         required={true}
-//         placeholder="11-11-1111"
-//         className={`px-4 pb-2  mx-2 mb-2 outline-none text-gray-300 ${isEditable? "border-2 border-blue-500 focus:ring-2 focus:ring-blue-500" : ""}`}
-//         />
-//         </div>
-
-//         <div className="flex flex-col">
-//         <label htmlFor="phoneNumber" className="m-4 mx-4">Phone Number </label>
-//         <input
-//         type="tel"
-//         value={phoneNo}
-//         onChange={(e) => {setPhoneNo(e.target.value)}} //TODO: validate the field properly on server side
-//         readOnly={!isEditable}
-//         required={true}
-//         placeholder="1234567890"
-//         className={`px-4 pb-2  mx-2 mb-2 outline-none text-gray-300 ${isEditable? "border-2 border-blue-500 focus:ring-2 focus:ring-blue-500" : ""}`}
-//         />
-//         </div>
-//       </form>
-//     </div>
-//   )
-// }
-
-// export default Profile
-
-
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useUserContext } from '../contexts'
 
 function Profile() {
-  const { username, isLoggedIn } = useUserContext();
+  const { username, isLoggedIn, userEvents } = useUserContext();
   const [email, setEmail] = useState("");
   const [phoneNo, setPhoneNo] = useState("");
   const [isEditable, setIsEditable] = useState(false);
@@ -180,6 +38,7 @@ function Profile() {
     if (loadDetails.dob) {
       setDob(loadDetails.dob);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const editProfile = (e) => {
@@ -191,7 +50,7 @@ function Profile() {
       }
       else {
         userDetails = JSON.parse(userDetails);
-        localStorage.setItem(username, JSON.stringify({ ...userDetails, email: email, phoneNumber: phoneNo, dob: dob }));
+        localStorage.setItem(username, JSON.stringify({ ...userDetails, email: email, phoneNumber: phoneNo, dob: dob, userEvents}));
         setIsEditable(false);
         displayMessage("Profile successfully edited!", "text-green-500");
       }

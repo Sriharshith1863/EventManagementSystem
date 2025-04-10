@@ -4,7 +4,9 @@ export const UserContext = createContext({
     username: "username",
     isLoggedIn: false,
     setIsLoggedIn: () => {},
-    setUsername: () => {}
+    setUsername: () => {},
+    resetUserDetails: () => {},
+    userEvents: []
 })
 
 export const useUserContext = () => {
