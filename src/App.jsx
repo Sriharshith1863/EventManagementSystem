@@ -54,7 +54,7 @@ function App() {
   return (
     <EventProvider value={{events, createEvent}}>
       <UserProvider value={{username, isLoggedIn, setIsLoggedIn, setUsername, resetUserDetails}}>
-        <BrowserRouter> //changed from createBrowserRouter to browser router because createbrowser router won't allow dynamic routes, which we want for different event pages
+        <BrowserRouter> {/*changed from createBrowserRouter to browser router because createbrowser router won't allow dynamic routes, which we want for different event pages*/}
         <Routes>
         <Route path='/' element={<Layout />}>
           <Route path='' element={
