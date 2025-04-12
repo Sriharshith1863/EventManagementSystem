@@ -1,103 +1,3 @@
-// import React, {useEffect, useState, useMemo} from 'react'
-// import { useEventContext, useUserContext } from '../contexts'
-// import { useNavigate } from 'react-router-dom';
-// import Event from './Event';
-// function MyEvents() {
-//   const {isLoggedIn, username} = useUserContext();
-//   const {events, createEvent} = useEventContext();
-//   const initialFormData = {
-//     eventName: "",
-//     venue: "",
-//     dateTime: "",
-//     description: "",
-//     organiserName: "",
-//     contact1: "",
-//     contact2: "",
-//     organiserEmailId: "",
-//     imageUrl: "/defaultAvatar.webp",
-//     eventCreater: `${username}`
-//   };
-  
-//   const [formData, setFormData] = useState(initialFormData);
-
-//     const navigate = useNavigate();
-//     const [activateForm, setActiveForm] = useState(false);
-//     useEffect(() => {
-//       if (!isLoggedIn) {
-//         navigate('/');
-//       }
-//       if(username.substring(username.length-3) !== 'org') {
-//         navigate('/home');
-//       }
-//       // eslint-disable-next-line
-//     }, []);
-
-//     const submitForm = (e) => {
-//       e.preventDefault();
-//       createEvent(formData);
-//       setActiveForm(false);
-//       setFormData(initialFormData);
-//     }
-
-//     const handleChange = (e) => {
-//       const { name, value } = e.target;
-//       setFormData((prev) => ({
-//         ...prev,
-//         [name]: value,
-//       }));
-//     };
-
-//     const renderedEvents = useMemo(() => {
-      
-//       return (
-//         <ul>
-//           {
-//             events.map((event, index) => (
-//               <li key={index} onClick={() => navigate(`/events/${username}/${event.eventId}`)} className="border-violet-600">
-//                 {
-//                   event.eventName
-//                 }
-//               </li>
-//             ))
-//           }
-//         </ul>
-//       );
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//     }, [events]);
-//   return (
-//     <div className="bg-gray-800 p-4">
-//       <div>
-//         <button onClick={() => {setActiveForm(true)}} className={`bg-indigo-600 hover:bg-indigo-700 ${activateForm? "hidden" : ""}`}>Create Event</button>
-//         <form id="eventCreateForm" className={`${activateForm? "z-10" : "hidden"} flex flex-col`} onSubmit={submitForm}>
-//           <label htmlFor='eventName'>Event Name: </label>
-//           <input type="text" id="eventName" name="eventName" onChange={handleChange} value={formData.eventName} required={true}/>
-//           <label htmlFor='venue'>Venue: </label>
-//           <input type="text" id="venue" name="venue" onChange={handleChange} value={formData.venue} required={true}/>
-//           <label htmlFor='dateTime'>Date and Time:</label>
-//           <input type="datetime" id="dateTime" name="dateTime" onChange={handleChange} value={formData.dateTime} required={true}/>
-//           <label htmlFor='description'>Description: </label>
-//           <input type="text" id="description" name="description" onChange={handleChange} value={formData.description}/>
-//           <label htmlFor='organiserName'>Organiser: </label>
-//           <input type="text" id="organiserName" name="organiserName" onChange={handleChange} value={formData.organiserName} required={true}/>
-//           <label htmlFor='contact1'>Contact1: </label>
-//           <input type="tel" id="contact1" name="contact1" onChange={handleChange} value={formData.contact1} required={true}/>
-//           <label htmlFor='contact2'>Contact2: </label>
-//           <input type="tel" id="contact2" name="contact2" onChange={handleChange} value={formData.contact2}/>
-//           <label htmlFor='contactEmail'>Email: </label>
-//           <input type="email" id="organiserEmailId" name="organiserEmailId" onChange={handleChange} value={formData.organiserEmailId}/>
-//           <button type="submit">Create</button>
-//         </form>
-//       </div>
-//       <div>
-//         {renderedEvents}
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default MyEvents
-
-
 import React, {useEffect, useState, useMemo} from 'react'
 import { useEventContext, useUserContext } from '../contexts'
 import { useNavigate } from 'react-router-dom';
@@ -105,8 +5,9 @@ import Event from './Event';
 
 function MyEvents() {
   const {isLoggedIn, username} = useUserContext();
-  const {events, createEvent} = useEventContext();
+  const {events, createEvent, launchEvent, setEvents, deleteEvent, editEvent} = useEventContext();
   const initialFormData = {
+    eventId: 0,
     eventName: "",
     venue: "",
     dateTime: "",
@@ -116,13 +17,14 @@ function MyEvents() {
     contact2: "",
     organiserEmailId: "",
     imageUrl: "/defaultAvatar.webp",
-    eventCreater: `${username}`
+    eventCreater: `${username}`,
+    eventLaunched: false
   };
   
   const [formData, setFormData] = useState(initialFormData);
   const navigate = useNavigate();
   const [activateForm, setActiveForm] = useState(false);
-  
+  const [isEditable, setIsEditable] = useState(false);
   useEffect(() => {
     if (!isLoggedIn) {
       navigate('/');
@@ -134,9 +36,14 @@ function MyEvents() {
   }, []);
 
   const submitForm = (e) => {
-    console.log("called");
     e.preventDefault();
-    createEvent(formData);
+    if(!isEditable) {
+    createEvent({...formData, eventId: Date.now()});
+    }
+    else {
+      setIsEditable(false);
+      editEvent(formData);
+    }
     setActiveForm(false);
     setFormData(initialFormData);
   }
@@ -149,9 +56,25 @@ function MyEvents() {
     }));
   };
 
+  const handleLaunch = (launchEventId, event) => {
+    setEvents(prevEvents =>
+      prevEvents.map(event =>
+        event.eventId === launchEventId
+          ? { ...event, eventLaunched: true }
+          : event
+      )
+    );
+
+    launchEvent(event);
+  }
+
+  const handleEdit = (event) => {
+    setIsEditable(true);
+    setActiveForm(true);
+    setFormData(event);
+  }
+
   const renderedEvents = useMemo(() => {
-    console.log(events);
-    
     return (
       <div className="space-y-4 mt-8 w-full">
         {events.length === 0 ? (
@@ -163,23 +86,73 @@ function MyEvents() {
           events.map((event, index) => (
             <div 
               key={index} 
-              onClick={() => navigate(`/events/${username}/${event.eventId}`)} 
-              className="bg-gray-800 rounded-lg border border-gray-700 hover:border-indigo-500 p-4 shadow-md cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-indigo-900/20 w-full"
+               
+              className="bg-gray-800 rounded-lg border border-gray-700 hover:border-indigo-500 p-4 shadow-md transition-all duration-200 hover:shadow-lg hover:shadow-indigo-900/20 w-full"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <img 
-                      src={event.imageUrl || "/defaultAvatar.webp"} 
-                      alt={event.eventName} 
-                      className="h-16 w-16 rounded-full object-cover border-2 border-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-semibold text-white">{event.eventName}</h3>
-                    <p className="text-gray-400 text-lg">{event.venue} • {event.dateTime}</p>
-                  </div>
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0">
+                  <img 
+                    src={event.imageUrl || "/defaultAvatar.webp"} 
+                    alt={event.eventName} 
+                    className="h-16 w-16 rounded-full object-cover border-2 border-gray-700"
+                  />
                 </div>
+                <div className="flex-grow">
+                  <h3 className="text-2xl font-semibold text-white">{event.eventName}</h3>
+                  <p className="text-gray-400 text-lg">{event.venue} • {event.dateTime}</p>
+                </div>
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={() => navigate(`/events/${username}/${event.eventId}`)} 
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View
+                  </button>
+                  
+                  {//TODO: we should impose this condition using values fetched from backend!!
+                    !event.eventLaunched && (
+                      <button 
+                        onClick={() => handleLaunch(event.eventId, event)} 
+                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+                        </svg>
+                        Launch
+                      </button>
+                    )
+                  }
+                  
+                  {
+                    !event.eventLaunched && (
+                      <button 
+                        onClick={() => handleEdit(event)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                      </button>
+                    )
+                  }
+                  {/*TODO: if it can be try to add a confirm delete form, "Do you really want to delete?"*/}
+                  <button 
+                    onClick={() => deleteEvent(event.eventId)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              </div>
                 <div className="hidden md:block text-gray-500 hover:text-indigo-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -217,7 +190,7 @@ function MyEvents() {
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
             <div className="bg-gray-800 w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden">
               <div className="bg-gray-700 px-6 py-4 flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-indigo-300">Create New Event</h2>
+                <h2 className="text-xl font-semibold text-indigo-300">{isEditable? "Edit Event" : "Create New Event"}</h2>
                 <button 
                   onClick={() => setActiveForm(false)}
                   className="text-gray-400 hover:text-white"
@@ -227,7 +200,7 @@ function MyEvents() {
                   </svg>
                 </button>
               </div>
-
+              {/*TODO: we have to add the input field for ticket somehow*/}
               <form id="eventCreateForm" className="p-6" onSubmit={submitForm}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -344,7 +317,7 @@ function MyEvents() {
                     type="submit" 
                     className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-200"
                   >
-                    Create Event
+                    {isEditable? "Edit Event" : "Create Event"}
                   </button>
                 </div>
               </form>

@@ -1,33 +1,8 @@
-// import React from 'react'
-// import { useNavigate } from 'react-router-dom';
-// function Home({eventsToRender = []}) {
-//   const navigate = useNavigate();  
-//   return (
-//     <div className='bg-gray-800 p-4'>
-//       <ul>
-//       {
-//             eventsToRender.map((event, index) => (
-//               <li key={index} onClick={() => navigate(`/events/${event.eventCreater}/${event.eventId}`)}>
-//                 <img src={event.imageUrl} />
-//                 <span>{event.eventName}</span>
-//                 <span>  By: {event.organiserName}</span>
-//               </li>
-//             ))
-//           }
-//       </ul>
-//     </div>
-//   )
-// }
-
-// export default Home;
-
-
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
 
 function Home({eventsToRender = []}) {
   const navigate = useNavigate();
-  console.log(eventsToRender);
   
   return (
     <div className='min-h-screen bg-gray-900 text-gray-100 py-8 px-4'>
@@ -40,7 +15,7 @@ function Home({eventsToRender = []}) {
             <p className="text-gray-500 mt-2">Check back later for exciting events</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mx-4">
             {eventsToRender.map((event, index) => (
               <div 
                 key={index} 

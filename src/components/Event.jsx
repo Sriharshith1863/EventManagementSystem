@@ -1,62 +1,20 @@
-// import React from 'react'
-// import { useParams } from 'react-router-dom'
-
-// function Event({eventsToSearch}) {
-//   const {creator, eventId} = useParams();
-//   const eventToRender = eventsToSearch.find(event =>
-//     event.eventId === Number(eventId) && event.eventCreater === creator
-//   );
-
-//   if (!eventToRender) return <div>Event not found!</div>;
-//   return (
-//     <div>
-//         <div>
-//             <h1>{eventToRender.eventName}</h1>
-//             <p>{eventToRender.description}</p>
-//            <div>
-//             <h2>Venue: {eventToRender.venue}</h2>
-//             <h2>Date and time: {eventToRender.dateTime}</h2>
-//            </div>
-//            <div>
-//             <h1>
-//                 Organiser Details
-//             </h1>
-//             <p>Organiser name: {eventToRender.organiserName}</p>
-//             <p>contact number 1: {eventToRender.contact1}</p>
-//             <p>contact number 1: {eventToRender.contact2}</p>
-//             <p>Email Id: {eventToRender.organiserEmailId}</p>
-//            </div>
-//         </div>
-//         <div>
-//             <img src={eventToRender.imageUrl} />
-//         </div>
-//     </div>
-//   )
-// }
-
-// export default Event
-
- {/* eventName: eventName,
-        venue: venue,
-        dateTime: dateTime,
-        description: description,
-        organiserName: organiserName,
-        contact1: contact1,
-        contact2: contact2,
-        organiserEmailId: organiserEmailId,
-        imageUrl: "/defaultAvatar.webp" */}
-
-
-
 import React from 'react'
 import { useParams } from 'react-router-dom';
-function Event({eventsToSearch}) {
+function Event({events1, events2}) {
   const {creator, eventId} = useParams();
-  const eventToRender = eventsToSearch.find(event =>
+  console.log(events1, events2);
+  console.log(eventId, creator);
+  
+  let eventToRender = events1.find(event =>
   event.eventId === Number(eventId) && event.eventCreater === creator
   );
 
-  if (!eventToRender) return <div>Event not found!</div>;
+  if (!eventToRender) {
+    eventToRender = events2.find(event =>
+      event.eventId === Number(eventId) && event.eventCreater === creator
+      );
+  }
+  if(!eventToRender) return <div>event not found</div>;
   // Define fallback values to prevent errors with undefined data
   const event = eventToRender || {
     eventName: "Event Name",

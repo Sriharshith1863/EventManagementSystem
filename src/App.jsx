@@ -11,19 +11,17 @@ import Event from './components/Event.jsx';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
-  const allEventDetails = JSON.parse(localStorage.getItem("allEvents"));
-  const [allEvents, setAllEvents] = useState(Array.isArray(allEventDetails) ? allEventDetails : []);
-
+  const launchedEventsDetails = JSON.parse(localStorage.getItem("launchedEvents"));
+  const [launchedEvents, setLaunchedEvents] = useState(Array.isArray(launchedEventsDetails) ? launchedEventsDetails : []);
   const resetUserDetails = () => {
     setUsername("");
     setIsLoggedIn(false);
   }
-
   const getUserItems = () => {
     return JSON.parse(localStorage.getItem(username));
   }
 
-  const setUserItems = () => {
+  const setUserItems = () => { //TODO: instead of localStorage we have to store in database
     const userdetails = getUserItems();
     localStorage.setItem(username, JSON.stringify({...userdetails, userEvents: events}));
   }
@@ -37,22 +35,36 @@ function App() {
 
   useEffect(() => {  //TODO: if we have to do any bigger work after adding a event, then may be this can cause problem, because it updates the localStorage after a render cycle
     setUserItems();
-    localStorage.setItem("allEvents",JSON.stringify(allEvents));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[events]);
 
+  useEffect(() => {
+    localStorage.setItem("launchedEvents",JSON.stringify(launchedEvents));
+  },[launchedEvents]);
+
   const createEvent = (event) => {
-    const dateNow = Date.now();
-    setEvents(prev => [...prev, {eventId: dateNow, ...event}]);
-    setAllEvents(prev => [...prev, {eventId: dateNow, ...event}]);
+    setEvents(prev => [...prev, {...event}]);
     // setEvents((prev) => (
     //   prev.push({eventId: dateNow, ...event})
     //shouldn't do state mutation
     // ));
-    setUserItems();
   }
+
+  const launchEvent = (event) => {
+    setLaunchedEvents(prev => [...prev, {...event}]);
+  }
+
+  const deleteEvent = (deleteEventId) => {
+    setEvents(prevEvents => prevEvents.filter(event => event.eventId !== deleteEventId));
+    setLaunchedEvents(prevlaunchedEvents => prevlaunchedEvents.filter(event => event.eventId !== deleteEventId));
+  }
+
+  const editEvent = (event) => {
+    setEvents(prev => prev.map(prevEvent => prevEvent.eventId === event.eventId ? event : prevEvent));
+  }
+
   return (
-    <EventProvider value={{events, createEvent}}>
+    <EventProvider value={{events, createEvent, launchEvent, setEvents, deleteEvent, editEvent}}>
       <UserProvider value={{username, isLoggedIn, setIsLoggedIn, setUsername, resetUserDetails}}>
         <BrowserRouter> {/*changed from createBrowserRouter to browser router because createbrowser router won't allow dynamic routes, which we want for different event pages*/}
         <Routes>
@@ -111,11 +123,11 @@ function App() {
               </div>
             </div>
             } />
-          <Route path='home' element={<Home eventsToRender={allEvents} />} />
+          <Route path='home' element={<Home eventsToRender={launchedEvents} />} />
           <Route path='myTickets' element={<MyTickets />} />
           <Route path='profile' element={<Profile />}/>
           <Route path="myevents" element={<MyEvents />} />
-          <Route path="events/:creator/:eventId" element={<Event eventsToSearch={allEvents} />} />
+          <Route path="events/:creator/:eventId" element={<Event events1={launchedEvents}  events2={events}/>} />
         </Route>
         </Routes>
         </BrowserRouter>
