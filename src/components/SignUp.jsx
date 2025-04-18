@@ -68,7 +68,7 @@
 //         onChange={(e) => setDob(e.target.value)}
 //         className="border rounded-sm focus:ring-blue-500 focus:ring-2 focus:border-none outline-none"
 //         />
-//         <button type="submit" className="bg-purple-700 py-1">SignUp</button>
+//         <button type="submit" className="bg-purple-700 cursor-pointer py-1">SignUp</button>
 //     </form>
 //   )
 // }
@@ -146,7 +146,7 @@ function SignUp({type}) {
         onChange={(e) => setDob(e.target.value)}
         className="border border-gray-600 bg-gray-700 rounded px-3 py-2 focus:ring-purple-500 focus:ring-2 focus:border-purple-500 outline-none text-gray-200"
         />
-        <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 mt-2 rounded-md transition duration-200 shadow-md">Sign Up</button>
+        <button type="submit" className="bg-purple-600 cursor-pointer hover:bg-purple-700 text-white font-medium py-2 mt-2 rounded-md transition duration-200 shadow-md">Sign Up</button>
     </form>
   )
 }

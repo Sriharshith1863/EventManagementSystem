@@ -85,7 +85,7 @@ function Profile() {
                 <span className="text-white text-sm">Change Photo</span>
               </div>
             </div>
-            <button className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 shadow-md">
+            <button className="mt-6 w-full cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 shadow-md">
               Upload Photo
             </button>
           </div>
@@ -101,7 +101,7 @@ function Profile() {
                 <h2 className="text-xl font-semibold text-indigo-300">Personal Information</h2>
                 <button
                   type="submit"
-                  className={`px-4 py-2 rounded-lg font-medium shadow-md transition-colors duration-200
+                  className={`px-4 py-2 cursor-pointer rounded-lg font-medium shadow-md transition-colors duration-200
                     ${isEditable 
                       ? "bg-green-600 hover:bg-green-700 text-white" 
                       : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
