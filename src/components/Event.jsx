@@ -1,10 +1,26 @@
 import React from 'react'
 import { useParams } from 'react-router-dom';
+import { useUserContext } from '../contexts'
 function Event({events1, events2}) {
   const {creator, eventId} = useParams();
+  const { username, isLoggedIn, userEvents, updateUserEvents, addEvent, removeEvent } = useUserContext();
+  let isUser=false
+  if(username.charAt(username.length-1)=='r'){
+    isUser=true;
+  }
+  
+  if(isUser){
+    const userdetails=JSON.parse(localStorage.getItem(`${username}`)) || [];
+    if(userdetails){
+      userdetails.userEvents.forEach(element => {
+        if(element.eventId===eventId){
+          isJoined=true;
+        }
+      });
+    }
+  }
   console.log(events1, events2);
   console.log(eventId, creator);
-  
   let eventToRender = events1.find(event =>
   event.eventId === Number(eventId) && event.eventCreater === creator
   );
@@ -136,6 +152,12 @@ function Event({events1, events2}) {
               alt={event.eventName}
               className="w-full h-auto object-cover rounded-lg"
             />
+            {isUser &&(
+              <button
+              className='bg-blue-600 hover:bg-blue-800 cursor-pointer px-3 py-2 w-full mt-3 
+              rounded-lg'>Join Event</button>
+            )
+            }
           </div>
         </div>
       </div>

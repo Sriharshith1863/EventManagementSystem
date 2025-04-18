@@ -6,7 +6,9 @@ export const UserContext = createContext({
     setIsLoggedIn: () => {},
     setUsername: () => {},
     resetUserDetails: () => {},
-    userEvents: []
+    userEvents: [],
+    addEvent: ()=>{},
+    removeEvent: ()=>{},
 })
 
 export const useUserContext = () => {

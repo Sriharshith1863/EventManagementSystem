@@ -13,6 +13,7 @@ function App() {
   const [username, setUsername] = useState("");
   const launchedEventsDetails = JSON.parse(localStorage.getItem("launchedEvents"));
   const [launchedEvents, setLaunchedEvents] = useState(Array.isArray(launchedEventsDetails) ? launchedEventsDetails : []);
+  
   const resetUserDetails = () => {
     setUsername("");
     setIsLoggedIn(false);
@@ -20,14 +21,14 @@ function App() {
   const getUserItems = () => {
     return JSON.parse(localStorage.getItem(username));
   }
-
+  
   const setUserItems = () => { //TODO: instead of localStorage we have to store in database
     const userdetails = getUserItems();
     localStorage.setItem(username, JSON.stringify({...userdetails, userEvents: events}));
   }
   
   const userDetails = getUserItems();
-  const [events, setEvents] = useState(Array.isArray(userDetails?.userEvents) ? userDetails.userEvents : []);  
+  const [events, setEvents] = useState(Array.isArray(userDetails?.userEvents) ? userDetails.userEvents : []);
   useEffect(() => {
     setEvents(Array.isArray(userDetails?.userEvents) ? userDetails.userEvents : []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,9 +64,17 @@ function App() {
     setEvents(prev => prev.map(prevEvent => prevEvent.eventId === event.eventId ? event : prevEvent));
   }
 
+  const addEvent = (event) => {
+    setEvents((prevEvents) => [...prevEvents, {...event}]);
+  };
+
+  const removeEvent = (eventId) => {
+    setEvents((prevEvents) => prevEvents.filter((event) => event.eventId !== eventId));
+  };
+
   return (
     <EventProvider value={{events, createEvent, launchEvent, setEvents, deleteEvent, editEvent}}>
-      <UserProvider value={{username, isLoggedIn, setIsLoggedIn, setUsername, resetUserDetails}}>
+      <UserProvider value={{username, isLoggedIn, setIsLoggedIn, setUsername, resetUserDetails,addEvent,removeEvent}}>
         <BrowserRouter> {/*changed from createBrowserRouter to browser router because createbrowser router won't allow dynamic routes, which we want for different event pages*/}
         <Routes>
         <Route path='/' element={<Layout />}>
