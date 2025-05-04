@@ -49,7 +49,7 @@
 //         onChange={(e) => setPassword(e.target.value)}
 //         className="border rounded-sm focus:ring-blue-500 focus:ring-2 focus:border-none outline-none py-1 w-full"
 //         />
-//         <button type="submit" className="bg-purple-700 py-2">Login</button>
+//         <button type="submit" className="bg-purple-700 cursor-pointer py-2">Login</button>
 //         <p>Don't have an account? <NavLink to='/signUp' className="underline text-blue-700">SignUp</NavLink></p>
 //     </form>
 //   )
@@ -108,7 +108,7 @@ function Login({type}) {
         onChange={(e) => setPassword(e.target.value)}
         className="border border-gray-600 bg-gray-700 rounded px-3 py-2 focus:ring-purple-500 focus:ring-2 focus:border-purple-500 outline-none text-gray-200 w-full"
         />
-        <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 mt-2 rounded-md transition duration-200 shadow-md">Login</button>
+        <button type="submit" className="bg-purple-600 cursor-pointer hover:bg-purple-700 text-white font-medium py-2 mt-2 rounded-md transition duration-200 shadow-md">Login</button>
         <p className="text-center text-gray-400">Don't have an account? <NavLink to='/signUp' className="text-purple-400 hover:text-purple-300">Sign Up</NavLink></p>
     </form>
   )

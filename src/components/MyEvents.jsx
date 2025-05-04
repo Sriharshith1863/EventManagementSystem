@@ -1,11 +1,13 @@
 import React, {useEffect, useState, useMemo} from 'react'
 import { useEventContext, useUserContext } from '../contexts'
 import { useNavigate } from 'react-router-dom';
+// import { useTicketContext } from '../contexts/TicketContext';
 import Event from './Event';
 
 function MyEvents() {
   const {isLoggedIn, username} = useUserContext();
   const {events, createEvent, launchEvent, setEvents, deleteEvent, editEvent} = useEventContext();
+  // const {tickets, removeTicket}=useTicketContext();
   const initialFormData = {
     eventId: 0,
     eventName: "",
@@ -74,6 +76,13 @@ function MyEvents() {
     setFormData(event);
   }
 
+  const handledelete= (eventID) => {
+    // const userTickets = tickets.filter(ticket => ticket.username === username);
+    // const ticket=userTickets.filter(ticket=>ticket.eventId===eventID);
+    deleteEvent(eventID);
+    // removeTicket(ticket.ticketId);
+  }
+
   const renderedEvents = useMemo(() => {
     return (
       <div className="space-y-4 mt-8 w-full">
@@ -105,7 +114,7 @@ function MyEvents() {
                 <div className="flex space-x-2">
                   <button 
                     onClick={() => navigate(`/events/${username}/${event.eventId}`)} 
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                    className="bg-indigo-600 cursor-pointer hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -118,7 +127,7 @@ function MyEvents() {
                     !event.eventLaunched && (
                       <button 
                         onClick={() => handleLaunch(event.eventId, event)} 
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                        className="bg-green-500 cursor-pointer hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
@@ -132,7 +141,7 @@ function MyEvents() {
                     !event.eventLaunched && (
                       <button 
                         onClick={() => handleEdit(event)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                        className="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -143,8 +152,8 @@ function MyEvents() {
                   }
                   {/*TODO: if it can be try to add a confirm delete form, "Do you really want to delete?"*/}
                   <button 
-                    onClick={() => deleteEvent(event.eventId)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
+                    onClick={() => handledelete(event.eventId)}
+                    className="bg-red-500 cursor-pointer hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -174,7 +183,7 @@ function MyEvents() {
           <h1 className="text-3xl font-bold text-indigo-400">My Events</h1>
           <button 
             onClick={() => {setActiveForm(true)}} 
-            className={`bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-colors duration-200 ${activateForm ? "hidden" : ""}`}
+            className={`bg-indigo-600 cursor-pointer hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-colors duration-200 ${activateForm ? "hidden" : ""}`}
           >
             <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -193,7 +202,7 @@ function MyEvents() {
                 <h2 className="text-xl font-semibold text-indigo-300">{isEditable? "Edit Event" : "Create New Event"}</h2>
                 <button 
                   onClick={() => setActiveForm(false)}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-400 cursor-pointer hover:text-white"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -309,13 +318,13 @@ function MyEvents() {
                   <button 
                     type="button" 
                     onClick={() => setActiveForm(false)} 
-                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg mr-4 hover:bg-gray-600"
+                    className="px-4 py-2 bg-gray-700 cursor-pointer text-gray-300 rounded-lg mr-4 hover:bg-gray-600"
                   >
                     Cancel
                   </button>
                   <button 
                     type="submit" 
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-200"
+                    className="px-6 py-2 cursor-pointer bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-200"
                   >
                     {isEditable? "Edit Event" : "Create Event"}
                   </button>
