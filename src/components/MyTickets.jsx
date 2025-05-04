@@ -6,13 +6,15 @@ function MyTickets() {
   const { isLoggedIn, username, removeEvent } = useUserContext();
   const navigate = useNavigate();
   const [userEvents, setUserEvents] = useState([]);
-  const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || [];
-
+  const userDetails = JSON.parse(localStorage.getItem(`${username}`)) || {};
+  const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
+  const tickets = allTickets.filter(ticket => ticket.username === username);
+  
   useEffect(() => {
     if (!isLoggedIn) {
       navigate('/');
     } else {
-      setUserEvents(userdetails.userEvents || []);
+      setUserEvents(userDetails.userEvents || []);
     }
     // eslint-disable-next-line
   }, [isLoggedIn, username]);
@@ -23,7 +25,10 @@ function MyTickets() {
   };
 
   const handleViewEvent = (eventId) => {
-    navigate(`/mytickets/${eventId}`);
+    const ticket = tickets.find(ticket => ticket.eventId === eventId);
+    if (ticket) {
+      navigate(`/tickets/view/${ticket.ticketId}`); // Use ticketId for navigation
+    }
   };
 
   return (

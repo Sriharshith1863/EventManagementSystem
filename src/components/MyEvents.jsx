@@ -1,11 +1,13 @@
 import React, {useEffect, useState, useMemo} from 'react'
 import { useEventContext, useUserContext } from '../contexts'
 import { useNavigate } from 'react-router-dom';
+// import { useTicketContext } from '../contexts/TicketContext';
 import Event from './Event';
 
 function MyEvents() {
   const {isLoggedIn, username} = useUserContext();
   const {events, createEvent, launchEvent, setEvents, deleteEvent, editEvent} = useEventContext();
+  // const {tickets, removeTicket}=useTicketContext();
   const initialFormData = {
     eventId: 0,
     eventName: "",
@@ -72,6 +74,13 @@ function MyEvents() {
     setIsEditable(true);
     setActiveForm(true);
     setFormData(event);
+  }
+
+  const handledelete= (eventID) => {
+    // const userTickets = tickets.filter(ticket => ticket.username === username);
+    // const ticket=userTickets.filter(ticket=>ticket.eventId===eventID);
+    deleteEvent(eventID);
+    // removeTicket(ticket.ticketId);
   }
 
   const renderedEvents = useMemo(() => {
@@ -143,7 +152,7 @@ function MyEvents() {
                   }
                   {/*TODO: if it can be try to add a confirm delete form, "Do you really want to delete?"*/}
                   <button 
-                    onClick={() => deleteEvent(event.eventId)}
+                    onClick={() => handledelete(event.eventId)}
                     className="bg-red-500 cursor-pointer hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

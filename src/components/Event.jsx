@@ -31,6 +31,35 @@ function Event({ events1, events2 }) {
       alert('You have joined the event!');
       setIsJoined(true);
 
+      const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
+      const newTicket = {
+          ticketId: Date.now(),
+          ticketcnt: 1,
+          eventId: eventToRender.eventId,
+          eventName: eventToRender.eventName,
+          username: username,
+          PurchaseDate: new Date().toLocaleDateString(),
+          venue: eventToRender.venue,
+          dateTime: eventToRender.dateTime,
+          contact1: eventToRender.contact1,
+          contact2: eventToRender.contact2,
+          organiserEmailId: eventToRender.organiserEmailId,
+          eventCreater: eventToRender.eventCreater
+          // eventId: 1,
+          // eventName: "event name",
+          // venue: "place",
+          // dateTime: "date and time",
+          // description: "anything about your event",
+          // organiserName: "name of the organiser",
+          // contact1: "1234567890",
+          // contact2: "1234567890",
+          // organiserEmailId: "email@gmail.com",
+          // imageUrl: "/defaultAvatar.webp",
+          // eventCreater: "event owner",
+        }
+      allTickets.push(newTicket);
+      localStorage.setItem('tickets', JSON.stringify(allTickets));
+
       // Update local storage
       const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || { userEvents: [] };
       userdetails.userEvents.push(eventToJoin);
