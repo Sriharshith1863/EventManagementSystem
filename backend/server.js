@@ -18,22 +18,23 @@ const db = new pg.Client({
   password: "chinnu@267",
   port: 5432,
 });
+
 db.connect();
 
 app.use(cors());
 app.use(bodyParser.json());
-
 app.use(express.static(path.join(__dirname, "../dist")));
 
-app.post('/api/signup', async (req, res) => {
-  const { name, email, password, dob, role } = req.body; 
+// Sign Up
+app.post('/api/signUp', async (req, res) => {
+  const { username, email, password, dob, role } = req.body;
   if (!role || (role !== 'user' && role !== 'organizer')) {
     return res.status(400).send("Role must be either 'user' or 'organizer'");
   }
   try {
     const result = await db.query(
-      'INSERT INTO users(name, email, password, dob, role) VALUES($1, $2, $3, $4, $5) RETURNING *',
-      [name, email, password, dob, role] // Include 'role' in query
+      'INSERT INTO users(username, email, password, dob, role) VALUES($1, $2, $3, $4, $5) RETURNING *',
+      [username, email, password, dob, role]
     );
     res.status(201).json({ user: result.rows[0] });
   } catch (err) {
@@ -60,15 +61,19 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Create event
-app.post('/api/events', async (req, res) => {
-  const { name, image, venue, startDate, endDate, cost } = req.body;
+// Edit Profile
+app.put('/api/users/:username', async (req, res) => {
+  const { username } = req.params;
+  const { email, dob, password } = req.body;
   try {
     const result = await db.query(
-      'INSERT INTO events(name, image, venue, start_date, end_date, cost) VALUES($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, image, venue, startDate, endDate, cost]
+      'UPDATE users SET email = $1, dob = $2, password = $3 WHERE username = $4 RETURNING *',
+      [email, dob, password, username]
     );
-    res.status(201).json({ event: result.rows[0] });
+    if (result.rows.length === 0) {
+      return res.status(404).send("User not found");
+    }
+    res.status(200).json({ user: result.rows[0] });
   } catch (err) {
     console.error(err);
     res.status(500).send("Internal server error");
@@ -76,7 +81,7 @@ app.post('/api/events', async (req, res) => {
 });
 
 // Get all events
-app.get('/api/events', async (req, res) => {
+app.get('/api/home', async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM events');
     res.status(200).json(result.rows);
@@ -86,26 +91,33 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
-// Book ticket
-app.post('/api/tickets', async (req, res) => {
-  const { userId, eventId, paymentDetails } = req.body;
+// Host event (Organizer creates an event)
+app.post('/api/host/:username', async (req, res) => {
+  const { username } = req.params;
+  const { eventId, name, venue, datetime, organizer, contact1, contact2, email, description, cost } = req.body;
+  // Check if eventId is provided
+  if (!eventId) {
+    return res.status(400).send("Event ID is required");
+  }
   try {
     const result = await db.query(
-      'INSERT INTO tickets(user_id, event_id, payment_details) VALUES($1, $2, $3) RETURNING *',
-      [userId, eventId, paymentDetails]
+      `INSERT INTO events (event_id, name, venue, datetime, organizer, organizer_username, contact1, contact2, email, description, cost)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING *`,
+      [eventId, name, venue, datetime, organizer, username, contact1, contact2 || null, email || null, description || null, cost]
     );
-    res.status(201).json({ ticket: result.rows[0] });
+    res.status(201).json({ event: result.rows[0] });
   } catch (err) {
-    console.error(err);
+    console.error("Error creating event:", err);
     res.status(500).send("Internal server error");
   }
 });
 
 // Get tickets for a user
-app.get('/api/tickets/:userId', async (req, res) => {
-  const { userId } = req.params;
+app.get('/api/tickets/:username', async (req, res) => {
+  const { username } = req.params;
   try {
-    const result = await db.query('SELECT * FROM tickets WHERE user_id = $1', [userId]);
+    const result = await db.query('SELECT * FROM tickets WHERE username = $1', [username]);
     res.status(200).json(result.rows);
   } catch (err) {
     console.error(err);
@@ -113,26 +125,41 @@ app.get('/api/tickets/:userId', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist/index.html"));
+// Get events for an organizer
+app.get('/api/events/org/:username', async (req, res) => {
+  const { username } = req.params;
+  try {
+    const result = await db.query('SELECT * FROM events WHERE organizer_username = $1', [username]);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error");
+  }
 });
 
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist/index.html"));
+// view details button
+app.get('/api/events/:username/:eventId', async (req, res) => {
+  const { username, eventId } = req.params;
+
+  try {
+    const result = await db.query(
+      'SELECT * FROM events WHERE organizer_username = $1 AND event_id = $2',
+      [username, eventId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Event not found");
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error fetching event details:", err);
+    res.status(500).send("Internal server error");
+  }
 });
 
-app.get('/signup', (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist/index.html"));
-});
-
-app.get('/events', (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist/index.html"));
-});
-
-app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist/index.html"));
-});
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
+
