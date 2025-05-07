@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams,useNavigate } from 'react-router-dom';
 import { useUserContext } from '../contexts';
 
 function Event({ events1, events2 }) {
@@ -92,7 +92,7 @@ function Event({ events1, events2 }) {
     organiserEmailId: "Not specified",
     imageUrl: "/defaultAvatar.webp"
   };
-
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <div className="w-full px-4 py-8">
@@ -204,6 +204,15 @@ function Event({ events1, events2 }) {
                     disabled
                   >Joined</button>
                 )}
+                {
+                  !isUser && isLoggedIn && (
+                    <button
+                    className='bg-blue-600 hover:bg-blue-800 cursor-pointer px-3 py-2 w-full mt-3 rounded-lg'
+                    onClick={() => navigate(`/events/${eventId}/participants`)}>
+                        Participant's list
+                    </button>
+                  )
+                }
               </div>
             </div>
           </div>
