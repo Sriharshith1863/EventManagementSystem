@@ -3,20 +3,23 @@ import { useNavigate } from 'react-router-dom';
 
 function Home({eventsToRender = []}) {
   const navigate = useNavigate();
-  
+  const availableEvents = eventsToRender
+  .filter(event => 
+    event.toDisplay === true
+  );
   return (
     <div className='min-h-screen bg-gray-900 text-gray-100 py-8 px-4'>
       <div className="w-full">
         <h1 className="text-3xl font-bold text-indigo-400 mb-8">Upcoming Events</h1>
         
-        {eventsToRender.length === 0 ? (
+        {availableEvents.length === 0 ? (
           <div className="text-center py-16 bg-gray-800 rounded-xl border border-gray-700">
             <p className="text-gray-400 text-xl">No events available</p>
             <p className="text-gray-500 mt-2">Check back later for exciting events</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mx-4">
-            {eventsToRender.map((event, index) => (
+            {availableEvents.map((event, index) => (
               <div 
                 key={index} 
                 onClick={() => navigate(`/events/${event.eventCreater}/${event.eventId}`)} 

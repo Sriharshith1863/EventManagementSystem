@@ -13,7 +13,7 @@ function Header() {
             <NavLink to='/myEvents' className={({isActive}) => `${isActive? "text-purple-500" : "text-green-700"} ${(isLoggedIn && !isUser)? "": "hidden" }`}>My Events</NavLink>
             <NavLink to='/profile' className={({isActive}) => `${isActive? "text-purple-500" : "text-green-700"} ${isLoggedIn? "": "hidden" }`}>Profile</NavLink>
             <NavLink to="/" className={({isActive}) => `${isActive? "text-purple-500" : "text-green-700"} ${isLoggedIn? "hidden": "" }`}>Login</NavLink>
-            <NavLink to="/signUp" className={({isActive}) => `${isActive? "text-purple-500" : "text-green-700"} ${isLoggedIn? "hidden": "" }`}>Sign Up</NavLink>
+            {/* <NavLink to="/signUp" className={({isActive}) => `${isActive? "text-purple-500" : "text-green-700"} ${isLoggedIn? "hidden": "" }`}>Sign Up</NavLink> */}
             <NavLink to="/" className={({isActive}) => `${isActive? "text-purple-500" : "text-green-700"} ${isLoggedIn? "": "hidden" }`} onClick={resetUserDetails}>Logout</NavLink>
         </nav>
     </header>

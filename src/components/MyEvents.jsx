@@ -6,7 +6,7 @@ import Event from './Event';
 
 function MyEvents() {
   const {isLoggedIn, username} = useUserContext();
-  const {events, createEvent, launchEvent, setEvents, deleteEvent, editEvent} = useEventContext();
+  const {events, createEvent, launchEvent, setEvents, deleteEvent, editEvent , updateParticipantCnt} = useEventContext();
   // const {tickets, removeTicket}=useTicketContext();
   const initialFormData = {
     eventId: 0,
@@ -20,7 +20,10 @@ function MyEvents() {
     organiserEmailId: "",
     imageUrl: "/defaultAvatar.webp",
     eventCreater: `${username}`,
-    eventLaunched: false
+    toDisplay: false,
+    eventLaunched: false,
+    ageLimit: 0,
+    maxLimit: 0
   };
   
   const [formData, setFormData] = useState(initialFormData);
@@ -62,12 +65,12 @@ function MyEvents() {
     setEvents(prevEvents =>
       prevEvents.map(event =>
         event.eventId === launchEventId
-          ? { ...event, eventLaunched: true }
+          ? { ...event, eventLaunched: true, toDisplay: true }
           : event
       )
     );
 
-    launchEvent(event);
+    launchEvent({...event, toDisplay: true});
   }
 
   const handleEdit = (event) => {
@@ -300,6 +303,32 @@ function MyEvents() {
                       className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="venue" className="block text-sm font-medium text-gray-400">Maximum Participants</label>
+                    <input 
+                      type="text" 
+                      id="maxLimit" 
+                      name="maxLimit" 
+                      onChange={handleChange} 
+                      value={formData.maxLimit} 
+                      required={true}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="venue" className="block text-sm font-medium text-gray-400">Age Limit(Participants under this age are not allowed)</label>
+                    <input 
+                      type="text" 
+                      id="ageLimit" 
+                      name="ageLimit" 
+                      onChange={handleChange} 
+                      value={formData.ageLimit} 
+                      required={true}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>                  
                   
                   <div className="space-y-2 md:col-span-2">
                     <label htmlFor="description" className="block text-sm font-medium text-gray-400">Description</label>
@@ -312,6 +341,7 @@ function MyEvents() {
                       className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     ></textarea>
                   </div>
+
                 </div>
                 
                 <div className="mt-8 flex justify-end">
