@@ -417,7 +417,7 @@ app.get('/api/tickets/:username', async (req, res) => {
   }
 });
 
-// Get events for an organizer
+// Get events for an organizer 
 app.get('/api/events/org/:username', async (req, res) => {
   const { username } = req.params;
   try {
