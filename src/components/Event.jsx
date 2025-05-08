@@ -28,7 +28,7 @@ function Event({ events1, events2 }) {
     if (isLoggedIn && !isJoined) {
       // Get user details from localStorage
       const userDetails = JSON.parse(localStorage.getItem(`${username}`)) || {};
-      const userDOB = userDetails.dateOfBirth;
+      const userDOB = userDetails.dob;
       if (!userDOB) {
         alert('Please update your date of birth in your profile before joining events.');
         return;

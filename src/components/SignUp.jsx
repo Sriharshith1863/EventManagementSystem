@@ -89,26 +89,26 @@ function SignUp({type}) {
         const [dob, setDob] = useState("");
         const navigate = useNavigate();
         const signUp = (e) => {
-            e.preventDefault();
-            const checkUser = localStorage.getItem(usernameLocal+type);
-            if(!checkUser) {
-              //TODO: Encrypt the password
-              if(password === confirmPassword) {
-                localStorage.setItem(usernameLocal+type, JSON.stringify({username: usernameLocal+type, password: password, dob: dob}));
-                setUsername(usernameLocal+type);
-                navigate("/home");
-                setIsLoggedIn(true);
-                setErrorMessage("");
-              }
-              else {
-                setErrorMessage("Retype your password");
-                setConfirmPassword("");
-              }
+          e.preventDefault();
+          const checkUser = localStorage.getItem(usernameLocal+type);
+          if(!checkUser) {
+            //TODO: Encrypt the password
+            if(password === confirmPassword) {
+              localStorage.setItem(usernameLocal+type, JSON.stringify({username: usernameLocal+type, password: password, dob: dob}));
+              setUsername(usernameLocal+type);
+              navigate("/");
+              setIsLoggedIn(true);
+              setErrorMessage("");
             }
             else {
-              setErrorMessage("Username is already in use, choose another one");
+              setErrorMessage("Retype your password");
+              setConfirmPassword("");
             }
-        }
+          }
+          else {
+            setErrorMessage("Username is already in use, choose another one");
+          }
+        }
 
   return (
       <form onSubmit={signUp} className="flex flex-col gap-3 justify-evenly bg-gray-800 flex-wrap text-gray-300 text-lg mx-4 p-6 rounded-lg w-full shadow-lg border border-gray-700">
