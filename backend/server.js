@@ -1,35 +1,186 @@
 import express from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
+import { Pool } from "pg";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
+import multer from "multer";
+import { asyncHandler } from "./asyncHandler.js";
+import { ApiError } from "./ApiError.js";
+import { ApiResponse } from "./ApiResponse.js";
+import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 const port = 3000;
 
+// ✅ Updated DB connection using connectionString
 const db = new pg.Client({
-  user: "postgres",
-  host: "localhost",
-  database: "Event Management System",
-  password: "chinnu@267",
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // Required for Railway, Render, etc.
+  },
 });
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // Required for Railway
+  },
+});
+
 
 db.connect();
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "../dist")));
+app.use(cookieParser());
 
 // ================= LOCAL AUTH ====================
+
+const verifyJWT = asyncHandler(async (req, _, next) => {
+  const token = req.cookies.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+  console.log(req.cookies.accessToken);
+  
+  
+  if(!token) {
+      throw new ApiError(401, "Unauthorized");
+  }
+  try {
+      const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); //ACCESS_TOKEN_SECRET is just some random hexadecimal string 
+      const { rows } = await pool.query(
+        'SELECT username, email, profile_image, role, dob FROM users WHERE username = $1',
+        [decodedToken.username]
+      );
+      const user = rows[0];            
+      if(!user) {
+          throw new ApiError(401, "Unauthorized");
+      }
+      req.user = user
+      next()
+  } catch (error) {
+      console.log("JWT Error:", error.name, error.message);
+      throw new ApiError(401, "Invalid access token");
+  }
+});
+
+function generateAccessToken(user) {
+  //short lived access token
+  return jwt.sign(
+    {
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      dob: user.dob
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+  );
+};
+
+function generateRefreshToken(user) {
+  return jwt.sign(
+    {
+      username: user.username,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+  );
+};
+
+const generateAccessAndRefreshToken = async (username) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const user = rows[0];
+    if(!user) {
+      throw new ApiError(401, "User doesn't exist");
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    
+    await pool.query('UPDATE users SET refreshToken = $1 WHERE username = $2', [refreshToken, username]);
+    return {accessToken, refreshToken};
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while generating access and refresh token");
+  }
+}
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies.refreshToken;
+
+  if(!incomingRefreshToken) {
+    throw new ApiError(401, "Refresh token is required");
+  }
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+    const { rows } = await pool.query(
+      'SELECT username, email, profile_image, refreshToken, dob FROM users WHERE username = $1',
+      [decodedToken.username]
+    );
+    const user = rows[0];
+    if(!user) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    if(incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    }
+
+    const {accessToken, refreshToken: newRefreshToken} = 
+    await generateAccessAndRefreshToken(user.username)
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(new ApiResponse(
+        200,
+        {accessToken,
+         refreshToken: newRefreshToken 
+        },
+        "Access token refreshed successfully"
+      ))
+      
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while refreshing access token");
+  }
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  await pool.query('UPDATE users SET refreshToken = NULL WHERE username = $1', [req.user.username]);
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  }
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    //{} => to show that empty data is sent
+    .json(new ApiResponse(200, {}, "User logged out successfully"))
+});
+
 
 // Sign Up
 app.post('/api/signUp', async (req, res) => {
@@ -78,13 +229,23 @@ app.post('/api/login', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(401).send("Invalid credentials");
     }
-
-    res.status(200).json({ user: result.rows[0] });
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(result.rows[0].username);
+    const options = {
+      httpOnly: true, //this says only server can do any change we want
+      secure: process.env.NODE_ENV === "production",
+    }
+    res.status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json({ user: result.rows[0] });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Internal server error");
+    res.status(500)
+    .send("Internal server error");
   }
 });
+
+app.post('/api/logout', verifyJWT, logoutUser);
 
 // ================ GOOGLE OAUTH ===================
 
@@ -143,7 +304,16 @@ app.post("/api/v1/users/oauth-token", async (req, res) => {
       [username, email, 'user']  // defaulting to 'user' role for OAuth
     );
 
-    res.status(200).json({
+    const {accessToken: accessToken1, refreshToken: refreshToken1} = await generateAccessAndRefreshToken(result.rows[0].username);
+    const options = {
+      httpOnly: true, //this says only server can do any change we want
+      secure: process.env.NODE_ENV === "production",
+    }
+
+    res.status(200)
+    .cookie("accessToken", accessToken1, options)
+    .cookie("refreshToken", refreshToken1, options)
+    .json({
       Username: username,
       Useremail: email,
       Userpicture: picture,
@@ -301,6 +471,82 @@ app.put('/api/host/:username/edit/:eventId', async (req, res) => {
   // Respond with the updated event
   res.status(200).json({ event: result.rows[0] });
 });
+
+// Upload profile picture (base64 or file or image URL)
+app.post("/api/users/:username/photo", upload.single("photo"), async (req, res) => {
+  const { username } = req.params;
+  const { imageUrl } = req.body;
+
+  let imageData;
+
+  try {
+    if (imageUrl) {
+      // Fetch image from URL and convert to base64
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        return res.status(400).send("Invalid image URL");
+      }
+      const buffer = await response.arrayBuffer();
+      imageData = Buffer.from(buffer).toString("base64");
+    } else if (req.file) {
+      // Get image from uploaded file (in memory)
+      imageData = req.file.buffer.toString("base64");
+    } else {
+      return res.status(400).send("No image provided");
+    }
+
+    const result = await db.query(
+      "UPDATE users SET profile_image = $1 WHERE username = $2 RETURNING *",
+      [imageData, username]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("User not found");
+    }
+
+    res.status(200).json({ user: result.rows[0], message: "Profile image updated" });
+  } catch (err) {
+    console.error("Error updating profile image:", err);
+    res.status(500).send("Internal server error");
+  }
+});
+
+// Reusing multer
+app.post("/api/events/:eventId/image", upload.single("image"), async (req, res) => {
+  const { eventId } = req.params;
+  const { imageUrl } = req.body;
+  let imageData;
+
+  try {
+    if (imageUrl) {
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        return res.status(400).send("Invalid image URL");
+      }
+      const buffer = await response.arrayBuffer();
+      imageData = Buffer.from(buffer).toString("base64");
+    } else if (req.file) {
+      imageData = req.file.buffer.toString("base64");
+    } else {
+      return res.status(400).send("No image provided");
+    }
+
+    const result = await db.query(
+      "UPDATE events SET image = $1 WHERE event_id = $2 RETURNING *",
+      [imageData, eventId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Event not found");
+    }
+
+    res.status(200).json({ event: result.rows[0], message: "Event image updated" });
+  } catch (err) {
+    console.error("Error uploading event image:", err);
+    res.status(500).send("Internal server error");
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
