@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams,useNavigate } from 'react-router-dom';
 import { useUserContext } from '../contexts';
+import { useEventContext } from '../contexts';
 
 function Event({ events1, events2 }) {
   const { creator, eventId } = useParams();
   const { username, isLoggedIn, addEvent } = useUserContext();
   const [isUser , setIsUser ] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
+  const [isEligible , setIsEligible] = useState(false);
+  const {updateParticipantCnt,isEventFull} = useEventContext();
 
   useEffect(() => {
     if (username.charAt(username.length - 1) === 'r') {
@@ -23,13 +26,49 @@ function Event({ events1, events2 }) {
 
   const handleJoinEvent = () => {
     if (isLoggedIn && !isJoined) {
+      // Get user details from localStorage
+      const userDetails = JSON.parse(localStorage.getItem(`${username}`)) || {};
+      const userDOB = userDetails.dateOfBirth;
+      if (!userDOB) {
+        alert('Please update your date of birth in your profile before joining events.');
+        return;
+      }
+      // Parse event date and user's DOB
+      const eventDate = new Date(eventToRender.dateTime);
+      const birthDate = new Date(userDOB);
+      // Calculate age on event date
+      let age = eventDate.getFullYear() - birthDate.getFullYear();
+      const monthDiff = eventDate.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && eventDate.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      // Check if user is under 18
+      if (age < event.ageLimit) {
+        alert(`Sorry, you must be at least ${event.ageLimit} years old to join this event.`);
+        return;
+      }
+
       const eventToJoin = {
         eventId: event.eventId,
         eventName: event.eventName,
       };
-      addEvent(eventToJoin);
+
+      // console.log(event.eventId);
+      // console.log("currentParticipants:", event.currentParticipants, typeof event.currentParticipants);
+      // console.log("maxLimit:", event.maxLimit, typeof event.maxLimit);
+
+      if(eventToRender.currentParticipants >= eventToRender.maxLimit){
+        alert("Sorry , this event is Full");
+        return;
+      }
+
+      
+      
+      addEvent(eventToRender);
       alert('You have joined the event!');
       setIsJoined(true);
+
+      
 
       const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
       const newTicket = {
@@ -59,7 +98,8 @@ function Event({ events1, events2 }) {
         }
       allTickets.push(newTicket);
       localStorage.setItem('tickets', JSON.stringify(allTickets));
-
+      const increment = 1;
+      updateParticipantCnt(eventToRender,increment);
       // Update local storage
       const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || { userEvents: [] };
       userdetails.userEvents.push(eventToJoin);
@@ -154,6 +194,19 @@ function Event({ events1, events2 }) {
                     <p className="text-gray-300 text-lg break-words">{event.contact1}</p>
                   </div>
                 </div>
+                <div>
+                  {!isUser && isJoined && (<div className="flex items-start">
+                    <div className="flex-shrink-0 mt-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-xl font-medium text-white"> Number of Paricipants</h3>
+                      <p className="text-gray-300 text-lg break-words">{event.currentParticipants}</p>
+                    </div>
+                  </div>)}
+                </div>
                 {event.contact2 && event.contact2 !== "Not specified" && (
                   <div className="flex items-start">
                     <div className="flex-shrink-0 mt-1">
@@ -193,12 +246,12 @@ function Event({ events1, events2 }) {
                   alt={event.eventName}
                   className="w-full h-auto object-cover rounded-lg"
                 />
-                {isUser  && !isJoined && (
+                {isUser  && !isJoined  && (
                   <button
                     className='bg-blue-600 hover:bg-blue-800 cursor-pointer px-3 py-2 w-full mt-3 rounded-lg'
                     onClick={handleJoinEvent}>Join Event</button>
                 )}
-                {isUser  && isJoined && (
+                {isUser  && isJoined  && (
                   <button
                     className='bg-blue-600 cursor-not-allowed hover:bg-blue-800 px-3 py-2 w-full mt-3 rounded-lg'
                     disabled

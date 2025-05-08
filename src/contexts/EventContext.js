@@ -15,7 +15,11 @@ export const EventContext = createContext({
       organiserEmailId: "email@gmail.com",
       imageUrl: "/defaultAvatar.webp",
       eventCreater: "event owner",
-      eventLaunched: false
+      eventLaunched: false,
+      toDisplay: true,
+      ageLimit: 0,
+      maxLimit : 0,
+      currentParticipants: 0
       //TODO: add the images here after starting backend
     }
   ],
@@ -23,7 +27,9 @@ export const EventContext = createContext({
   launchEvent: (event) => {},
   setEvents: (event) => {},
   deleteEvent: (eventId) => {},
-  editEvent: (event) => {}
+  editEvent: (event) => {},
+  updateParticipantCnt: (eventId, increment) => {},
+  isEventFull: (event) => {}
 })
 
 export const useEventContext = () => {

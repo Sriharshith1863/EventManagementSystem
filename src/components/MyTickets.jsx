@@ -14,13 +14,31 @@ function MyTickets() {
     if (!isLoggedIn) {
       navigate('/');
     } else {
-      setUserEvents(userDetails.userEvents || []);
+      const filteredEvents = (userDetails.userEvents || []).filter(event => event.toDisplay === true);
+      setUserEvents(filteredEvents || []);
     }
     // eslint-disable-next-line
   }, [isLoggedIn, username]);
 
+  // const handleDeleteEvent = (eventId) => {
+  //   // removeEvent(eventId);
+  //   // setUserEvents(prevEvents => prevEvents.filter(event => event.eventId !== eventId));
+    
+  // };
+
   const handleDeleteEvent = (eventId) => {
-    removeEvent(eventId);
+    // Update the toDisplay property for the specific event
+    const updatedEvents = userDetails.userEvents.map(event => 
+      event.eventId === eventId 
+        ? { ...event, toDisplay: false }
+        : event
+    );
+    // Save back to localStorage
+    localStorage.setItem(username, JSON.stringify({
+      ...userDetails,
+      userEvents: updatedEvents
+    }));
+    // Update the state to remove the event from view
     setUserEvents(prevEvents => prevEvents.filter(event => event.eventId !== eventId));
   };
 

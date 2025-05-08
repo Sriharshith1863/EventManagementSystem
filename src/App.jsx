@@ -48,7 +48,10 @@ function App() {
   },[launchedEvents]);
 
   const createEvent = (event) => {
-    setEvents(prev => [...prev, {...event}]);
+    setEvents(prev => [...prev, {...event,
+      currentParticipants:0
+    }]);
+
     // setEvents((prev) => (
     //   prev.push({eventId: dateNow, ...event})
     //shouldn't do state mutation
@@ -56,7 +59,10 @@ function App() {
   }
 
   const launchEvent = (event) => {
-    setLaunchedEvents(prev => [...prev, {...event}]);
+    setLaunchedEvents(prev => [...prev, {
+      ...event,
+      currentParticipants: event.currentParticipants || 0
+    }]);
   }
 
   const deleteEvent = (deleteEventId) => {
@@ -80,9 +86,28 @@ function App() {
 
   };
 
+  const isEventFull = (event) => {
+    return event.currentParticipants >= event.maxLimit
+  };
+
+  const updateParticipantCnt = (event, increment) => {
+    // Update in events array
+    setEvents(prevEvents => prevEvents.map(e => 
+      e.eventId === event.eventId 
+        ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
+        : e
+    ));
+    
+    // Update in launchedEvents array
+    setLaunchedEvents(prevEvents => prevEvents.map(e => 
+      e.eventId === event.eventId 
+        ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
+        : e
+    ));
+  }
 
   return (
-    <EventProvider value={{events, createEvent, launchEvent, setEvents, deleteEvent, editEvent}}>
+    <EventProvider value={{events, createEvent, launchEvent, setEvents, deleteEvent, editEvent, updateParticipantCnt, isEventFull}}>
       <UserProvider value={{username, isLoggedIn, setIsLoggedIn, setUsername, resetUserDetails,addEvent,removeEvent}}>
         <TicketProvider value={{deleteTicket}}>
           <BrowserRouter> {/*changed from createBrowserRouter to browser router because createbrowser router won't allow dynamic routes, which we want for different event pages*/}
