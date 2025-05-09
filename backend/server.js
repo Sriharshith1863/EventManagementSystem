@@ -355,24 +355,52 @@ app.post("/api/v1/users/oauth-refresh", async (req, res) => {
   }
 });
 
-// Edit Profile
+// Edit Profile (Partial Update)
 app.put('/api/users/:username', async (req, res) => {
   const { username } = req.params;
-  const { email, dob, password } = req.body;
+  const { email, dob, phone_no } = req.body;
+
   try {
-    const result = await db.query(
-      'UPDATE users SET email = $1, dob = $2, password = $3 WHERE username = $4 RETURNING *',
-      [email, dob, password, username]
-    );
+    // Build dynamic query
+    const fields = [];
+    const values = [];
+    let index = 1;
+
+    if (email) {
+      fields.push(`email = $${index++}`);
+      values.push(email);
+    }
+    if (dob) {
+      fields.push(`dob = $${index++}`);
+      values.push(dob);
+    }
+    if (phone_no) {
+      fields.push(`phone_no = $${index++}`);
+      values.push(phone_no);
+    }
+
+    // If no fields are provided, return bad request
+    if (fields.length === 0) {
+      return res.status(400).send("No fields provided to update");
+    }
+
+    // Final query
+    values.push(username);
+    const query = `UPDATE users SET ${fields.join(", ")} WHERE username = $${index} RETURNING *`;
+
+    const result = await db.query(query, values);
+
     if (result.rows.length === 0) {
       return res.status(404).send("User not found");
     }
+
     res.status(200).json({ user: result.rows[0] });
   } catch (err) {
     console.error(err);
     res.status(500).send("Internal server error");
   }
 });
+
 
 // Get all events
 app.get('/api/home', async (req, res) => {
@@ -493,28 +521,82 @@ app.get('/api/events/:username/:eventId', async (req, res) => {
   }
 });
 
-// edit event
+// Edit Event (Partial Update)
 app.put('/api/host/:username/edit/:eventId', async (req, res) => {
   const { username, eventId } = req.params;
   const { name, venue, datetime, organizer, contact1, contact2, email, description, cost } = req.body;
 
-  // Prepare the SQL query and values
-  const result = await db.query(
-    `UPDATE events
-     SET name = $1, venue = $2, datetime = $3, organizer = $4, contact1 = $5, contact2 = $6, email = $7, description = $8, cost = $9
-     WHERE event_id = $10 AND organizer_username = $11
-     RETURNING *`,
-    [name, venue, datetime, organizer, contact1, contact2, email, description, cost, eventId, username]
-  );
+  try {
+    // Dynamically build query
+    const fields = [];
+    const values = [];
+    let index = 1;
 
-  // Check if the event was updated
-  if (result.rows.length === 0) {
-    return res.status(404).send("Event not found or you are not the organizer");
+    if (name) {
+      fields.push(`name = $${index++}`);
+      values.push(name);
+    }
+    if (venue) {
+      fields.push(`venue = $${index++}`);
+      values.push(venue);
+    }
+    if (datetime) {
+      fields.push(`datetime = $${index++}`);
+      values.push(datetime);
+    }
+    if (organizer) {
+      fields.push(`organizer = $${index++}`);
+      values.push(organizer);
+    }
+    if (contact1) {
+      fields.push(`contact1 = $${index++}`);
+      values.push(contact1);
+    }
+    if (contact2) {
+      fields.push(`contact2 = $${index++}`);
+      values.push(contact2);
+    }
+    if (email) {
+      fields.push(`email = $${index++}`);
+      values.push(email);
+    }
+    if (description) {
+      fields.push(`description = $${index++}`);
+      values.push(description);
+    }
+    if (cost) {
+      fields.push(`cost = $${index++}`);
+      values.push(cost);
+    }
+
+    // If no fields are provided, return bad request
+    if (fields.length === 0) {
+      return res.status(400).send("No fields provided to update");
+    }
+
+    // Add eventId and username to the query
+    values.push(eventId, username);
+    const query = `
+      UPDATE events 
+      SET ${fields.join(", ")} 
+      WHERE event_id = $${index++} AND organizer_username = $${index}
+      RETURNING *`;
+
+    const result = await db.query(query, values);
+
+    // Check if the event was updated
+    if (result.rows.length === 0) {
+      return res.status(404).send("Event not found or you are not the organizer");
+    }
+
+    // Respond with the updated event
+    res.status(200).json({ event: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal server error");
   }
-
-  // Respond with the updated event
-  res.status(200).json({ event: result.rows[0] });
 });
+
 
 // Upload profile picture (base64 or file or image URL)
 app.post("/api/users/:username/photo", upload.single("photo"), async (req, res) => {
@@ -598,7 +680,7 @@ app.get('/event/:eventId/participants', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT u.username AS name, 
-              u.email AS contact, 
+              u.phone_no AS contact, 
               t.ticket_id, 
               DATE(t.payment_time) AS purchase_date
        FROM tickets t
