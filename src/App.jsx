@@ -90,17 +90,17 @@ function App() {
     return event.currentParticipants >= event.maxLimit
   };
 
-  const updateParticipantCnt = (event, increment) => {
+  const updateParticipantCnt = (eventId, increment) => {
     // Update in events array
     setEvents(prevEvents => prevEvents.map(e => 
-      e.eventId === event.eventId 
+      e.eventId === eventId 
         ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
         : e
     ));
     
     // Update in launchedEvents array
     setLaunchedEvents(prevEvents => prevEvents.map(e => 
-      e.eventId === event.eventId 
+      e.eventId === eventId 
         ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
         : e
     ));
