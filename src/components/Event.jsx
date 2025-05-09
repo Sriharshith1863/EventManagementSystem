@@ -99,7 +99,7 @@ function Event({ events1, events2 }) {
       allTickets.push(newTicket);
       localStorage.setItem('tickets', JSON.stringify(allTickets));
       const increment = 1;
-      updateParticipantCnt(eventToRender,increment);
+      updateParticipantCnt(eventToRender.eventId,increment);
       // Update local storage
       const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || { userEvents: [] };
       userdetails.userEvents.push(eventToJoin);
