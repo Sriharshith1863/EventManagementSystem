@@ -2,33 +2,71 @@ import React, { useState, useEffect } from 'react';
 import { useParams,useNavigate } from 'react-router-dom';
 import { useUserContext } from '../contexts';
 import { useEventContext } from '../contexts';
-
+import { fetchWithRefresh } from '../utils/fetchWithRefresh';
 function Event({ events1, events2 }) {
   const { creator, eventId } = useParams();
-  const { username, isLoggedIn, addEvent } = useUserContext();
+  const { username, isLoggedIn, setUsername, setIsLoggedIn} = useUserContext();
   const [isUser , setIsUser ] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
-  const [isEligible , setIsEligible] = useState(false);
-  const {updateParticipantCnt,isEventFull} = useEventContext();
+  const [dob, setDob] = useState(null);
+  const { isEventFull, addEvent} = useEventContext();
+  const [message, setMessage] = useState("");
+  const [color, setColor] = useState("text-red-500");
+  const navigate = useNavigate();
+
+  const displayMessage = (messageToDisplay, colorToDisplay, duration = 3000) => {
+    setMessage(messageToDisplay);
+    setColor(colorToDisplay);
+    setTimeout(() => {
+      setMessage("");
+      setColor("");
+    }, duration);
+  }
+
+  useEffect(() => {
+      const checkUser = async () => {
+        try {
+          const res = await fetchWithRefresh(`http://localhost:3000/api/current-user-details`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+          const respo = await res.json();
+          const response = respo.data;
+          setUsername(response.user.username+response.user.role);
+          setIsLoggedIn(true);
+          setDob(response.user.dob);
+        // eslint-disable-next-line no-unused-vars
+        } catch (error) {
+          displayMessage("You can just see this page", "text-green-500");
+        }
+      }
+      checkUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[]);
 
   useEffect(() => {
     if (username.charAt(username.length - 1) === 'r') {
       setIsUser (true);
     }
+    const joined = events2.some(element => element.eventId === Number(eventId));
+    setIsJoined(joined);
+    // const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || [];
+    // if (userdetails && userdetails.userEvents) {
+    //   const joined = userdetails.userEvents.some(element => element.eventId === Number(eventId));
+    //   setIsJoined(joined);
+    //   // console.log(isJoined);
+    // }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
 
-    const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || [];
-    if (userdetails && userdetails.userEvents) {
-      const joined = userdetails.userEvents.some(element => element.eventId === Number(eventId));
-      setIsJoined(joined);
-      // console.log(isJoined);
-    }
-  }, [username, eventId]);
-
-  const handleJoinEvent = () => {
+  const handleJoinEvent = async () => {
     if (isLoggedIn && !isJoined) {
       // Get user details from localStorage
-      const userDetails = JSON.parse(localStorage.getItem(`${username}`)) || {};
-      const userDOB = userDetails.dob;
+
+      //const userDetails = JSON.parse(localStorage.getItem(`${username}`)) || {};
+      const userDOB = dob;
       if (!userDOB) {
         alert('Please update your date of birth in your profile before joining events.');
         return;
@@ -48,64 +86,86 @@ function Event({ events1, events2 }) {
         return;
       }
 
-      const eventToJoin = {
-        eventId: event.eventId,
-        eventName: event.eventName,
-      };
+      // const eventToJoin = {
+      //   eventId: event.eventId,
+      //   eventName: event.eventName,
+      // };
 
       // console.log(event.eventId);
       // console.log("currentParticipants:", event.currentParticipants, typeof event.currentParticipants);
       // console.log("maxLimit:", event.maxLimit, typeof event.maxLimit);
 
-      if(eventToRender.currentParticipants >= eventToRender.maxLimit){
-        alert("Sorry , this event is Full");
+      if(isEventFull(eventToRender)){
+        displayMessage("Sorry , this event is Full", "text-red-500");
         return;
       }
 
-      
-      
       addEvent(eventToRender);
-      alert('You have joined the event!');
+      displayMessage("You have joined the event!", "text-green-500", 5000);
+      //alert('You have joined the event!');
       setIsJoined(true);
 
       
-
-      const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
-      const newTicket = {
-          ticketId: Date.now(),
-          ticketcnt: 1,
-          eventId: eventToRender.eventId,
-          eventName: eventToRender.eventName,
-          username: username,
-          PurchaseDate: new Date().toLocaleDateString(),
-          venue: eventToRender.venue,
-          dateTime: eventToRender.dateTime,
-          contact1: eventToRender.contact1,
-          contact2: eventToRender.contact2,
-          organiserEmailId: eventToRender.organiserEmailId,
-          eventCreater: eventToRender.eventCreater
-          // eventId: 1,
-          // eventName: "event name",
-          // venue: "place",
-          // dateTime: "date and time",
-          // description: "anything about your event",
-          // organiserName: "name of the organiser",
-          // contact1: "1234567890",
-          // contact2: "1234567890",
-          // organiserEmailId: "email@gmail.com",
-          // imageUrl: "/defaultAvatar.webp",
-          // eventCreater: "event owner",
+      // const alltickets = await fetch(`http://localhost:3000/api/allTickets`,
+      //   {
+      //     method: "GET",
+      //     credentials: "include"
+      //   }
+      // );
+      // const allTickets = await alltickets.json() || [];
+      // //const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
+      // const newTicket = {
+      //     ticket_id: Date.now(),
+      //     ticketcnt: 1,
+      //     event_id: eventToRender.eventId,
+      //     username: username,
+      //     Payment_time: new Date().toLocaleDateString(),
+      //     cost: eventToRender.ticketCost
+      //     // eventId: 1,
+      //     // eventName: "event name",
+      //     // venue: "place",
+      //     // dateTime: "date and time",
+      //     // description: "anything about your event",
+      //     // organiserName: "name of the organiser",
+      //     // contact1: "1234567890",
+      //     // contact2: "1234567890",
+      //     // organiserEmailId: "email@gmail.com",
+      //     // imageUrl: "/defaultAvatar.webp",
+      //     // eventCreater: "event owner",
+      //   }
+      // allTickets.push(newTicket);
+      try {
+        await fetch(`http://localhost:3000/api/events/${eventId}/join/${username.substring(0,username.length-3)}`,
+        {
+          method: 'POST',
+          headers: {
+              "Content-Type": "application/json"
+            },
+          credentials: "include",
+          body: JSON.stringify({
+            ticket_id: Date.now(),
+            ticketcnt: 1,
+            event_id: eventToRender.eventId,
+            username: username,
+            Payment_time: new Date().toLocaleDateString(),
+            cost: eventToRender.cost,
+            toDisplay: true
+          })
         }
-      allTickets.push(newTicket);
-      localStorage.setItem('tickets', JSON.stringify(allTickets));
-      const increment = 1;
-      updateParticipantCnt(eventToRender,increment);
-      // Update local storage
-      const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || { userEvents: [] };
-      userdetails.userEvents.push(eventToJoin);
-      localStorage.setItem(`${username}`, JSON.stringify(userdetails));
+      );
+        //localStorage.setItem('tickets', JSON.stringify(allTickets));
+        // const increment = 1;
+        // updateParticipantCnt(eventToRender,increment);
+        // Update local storage
+        // const userdetails = JSON.parse(localStorage.getItem(`${username}`)) || { userEvents: [] };
+        // userdetails.userEvents.push(eventToJoin);
+        // localStorage.setItem(`${username}`, JSON.stringify(userdetails));
+      // eslint-disable-next-line no-unused-vars
+      } catch (error) {
+        displayMessage("something went wrong while storing a ticket.", "text-red-500", 2000);
+      }
     } else {
-      alert('You are already joined or not logged in.'); // Optional: Notify the user
+      displayMessage("You are already joined or not Logged in.", "text-red-500", 5000);
     }
   };
 
@@ -130,11 +190,17 @@ function Event({ events1, events2 }) {
     contact1: "Not specified",
     contact2: "Not specified",
     organiserEmailId: "Not specified",
-    imageUrl: "/defaultAvatar.webp"
+    imageUrl: "/defaultAvatar.webp",
+    eventCreater: "Not specified",
+    eventLaunched: false,
   };
-  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
+      {message && (
+        <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg ${color === "text-green-500" ? "bg-green-900/70" : "bg-red-900/70"}`}>
+          <p className={`font-medium ${color}`}>{message}</p>
+        </div>
+      )}
       <div className="w-full px-4 py-8">
         <div className="flex flex-col lg:flex-row h-full">
           {/* Left side - Event information */}

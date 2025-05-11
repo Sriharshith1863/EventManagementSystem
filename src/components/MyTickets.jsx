@@ -1,22 +1,58 @@
 import React, { useEffect, useState } from 'react';
 import { useUserContext } from '../contexts';
 import { useNavigate } from 'react-router-dom';
-
+import { fetchWithRefresh } from '../utils/fetchWithRefresh';
 function MyTickets() {
-  const { isLoggedIn, username, removeEvent } = useUserContext();
+  const { isLoggedIn, username, removeEvent, setUsername, setIsLoggedIn } = useUserContext();
   const navigate = useNavigate();
   const [userEvents, setUserEvents] = useState([]);
-  const userDetails = JSON.parse(localStorage.getItem(`${username}`)) || {};
-  const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
-  const tickets = allTickets.filter(ticket => ticket.username === username);
+  //const userDetails = JSON.parse(localStorage.getItem(`${username}`)) || {};
+  //const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
+  //const tickets = allTickets.filter(ticket => ticket.username === username);
   
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/');
-    } else {
-      const filteredEvents = (userDetails.userEvents || []).filter(event => event.toDisplay === true);
-      setUserEvents(filteredEvents || []);
-    }
+    const checkUser = async () => {
+          try {
+            const res = await fetchWithRefresh(`http://localhost:3000/api/current-user-details`,
+              {
+                method: "GET",
+                credentials: "include",
+              }
+            );
+            const response = await res.json();
+            setUsername(response.user.username+response.user.role);
+            setIsLoggedIn(true);
+
+
+            const resp = await fetch(`http://localhost:3000/api/tickets/${response.user.username}`,
+              {
+                method: 'GET',
+                credentials: 'include'
+              }
+            );
+            const respo = await resp.json();
+            const response1 = respo.map(ticket => ({
+              ticketId: ticket.ticket_id,
+              eventId: ticket.event_id,
+              username: ticket.username,
+              paymentTime: ticket.payment_time,
+              cost: ticket.cost,
+              toDisplay: ticket.to_display
+            }));
+            const filteredEvents = (response1 || []).filter(ticket => ticket.toDisplay === true);
+            setUserEvents(filteredEvents || []);
+          } catch (error) {
+            console.log("error fetching refresh and access tokens",error);
+            navigate('/');
+          }
+        }
+        checkUser();
+    // if (!isLoggedIn) {
+    //   navigate('/');
+    // } else {
+    //   const filteredEvents = (userDetails.userEvents || []).filter(event => event.toDisplay === true);
+    //   setUserEvents(filteredEvents || []);
+    // }
     // eslint-disable-next-line
   }, [isLoggedIn, username]);
 
@@ -28,22 +64,23 @@ function MyTickets() {
 
   const handleDeleteEvent = (eventId) => {
     // Update the toDisplay property for the specific event
-    const updatedEvents = userDetails.userEvents.map(event => 
+    setUserEvents(prevEvents => prevEvents.map(event => 
       event.eventId === eventId 
         ? { ...event, toDisplay: false }
         : event
-    );
+    ));
+    removeEvent(eventId);
     // Save back to localStorage
-    localStorage.setItem(username, JSON.stringify({
-      ...userDetails,
-      userEvents: updatedEvents
-    }));
+    // localStorage.setItem(username, JSON.stringify({
+    //   ...userDetails,
+    //   userEvents: updatedEvents
+    // }));
     // Update the state to remove the event from view
-    setUserEvents(prevEvents => prevEvents.filter(event => event.eventId !== eventId));
+    //setUserEvents(prevEvents => prevEvents.filter(event => event.eventId !== eventId));
   };
 
   const handleViewEvent = (eventId) => {
-    const ticket = tickets.find(ticket => ticket.eventId === eventId);
+    const ticket = userEvents.find(ticket => ticket.eventId === eventId && ticket.toDisplay === true);
     if (ticket) {
       navigate(`/tickets/view/${ticket.ticketId}`); // Use ticketId for navigation
     }

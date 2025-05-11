@@ -1,12 +1,13 @@
 import React, {useEffect, useState, useMemo} from 'react'
 import { useEventContext, useUserContext } from '../contexts'
 import { useNavigate } from 'react-router-dom';
+import { fetchWithRefresh } from '../utils/fetchWithRefresh';
 // import { useTicketContext } from '../contexts/TicketContext';
 import Event from './Event';
 
 function MyEvents() {
-  const {isLoggedIn, username} = useUserContext();
-  const {events, createEvent, launchEvent, setEvents, deleteEvent, editEvent , updateParticipantCnt} = useEventContext();
+  const {username, setUsername, setIsLoggedIn} = useUserContext();
+  const {events, createEvent, launchEvent, setEvents, deleteEvent, editEvent, setLaunchedEvents} = useEventContext();
   // const {tickets, removeTicket}=useTicketContext();
   const initialFormData = {
     eventId: 0,
@@ -19,11 +20,11 @@ function MyEvents() {
     contact2: "",
     organiserEmailId: "",
     imageUrl: "/defaultAvatar.webp",
-    eventCreater: `${username}`,
-    toDisplay: false,
+    eventCreater: `${username.substring(0, username.length-3)}`,
     eventLaunched: false,
     ageLimit: 0,
-    maxLimit: 0
+    maxLimit: 0,
+    cost: 0,
   };
   
   const [formData, setFormData] = useState(initialFormData);
@@ -31,15 +32,83 @@ function MyEvents() {
   const [activateForm, setActiveForm] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/');
-    }
-    if(username.substring(username.length-3) !== 'org') {
-      navigate('/home');
-    }
-    // eslint-disable-next-line
-  }, []);
-
+        console.log("able to get to this page");
+        const checkUser = async () => {
+          try {
+            console.log(1);
+            const res = await fetch(`http://localhost:3000/api/current-user-details`,
+              {
+                method: "GET",
+                credentials: "include",
+              }
+            );
+            console.log(2);
+            if(!res.ok) {
+              console.log("error fetching user details....");
+              throw new Error("error fetching user details...");
+            }
+            console.log(3);
+            const response = await res.json();
+            setUsername(response.user.username+response.user.role);
+            setIsLoggedIn(true);
+            setEvents(response.user.events.map(event => ({
+            eventId: event.event_id,
+            eventName: event.name,
+            venue: event.venue,
+            dateTime: event.datetime,
+            organizerName: event.organizer,
+            description: event.description,
+            cost: event.cost,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            organiserEmailId: event.email,
+            eventLaunched: event.event_launched,
+            eventCreator: event.organizer_username,
+            imageUrl: event.image
+        })));
+            const resp1 = await fetch(`http://localhost:3000/api/home`,
+          {
+            method: 'GET',
+          }
+        );
+        const resp3 = await resp1.json();
+        const response3 = resp3.map(event => ({
+            eventId: event.event_id,
+            eventName: event.name,
+            venue: event.venue,
+            dateTime: event.datetime,
+            organizerName: event.organizer,
+            description: event.description,
+            cost: event.cost,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            organiserEmailId: event.email,
+            eventLaunched: event.event_launched,
+            eventCreator: event.organizer_username,
+            imageUrl: event.image
+        }));
+        setLaunchedEvents(response3.filter(event => event.eventLaunched === true));
+            console.log(response.user.role);
+            if(response.user.role !== "org") {
+              navigate("/home");
+            }
+          // eslint-disable-next-line no-unused-vars
+          } catch (error) {
+            navigate("/");
+          }
+        }
+        checkUser();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      },[]);
+  // useEffect(() => {
+  //   if (!isLoggedIn) {
+  //     navigate('/');
+  //   }
+  //   if(username.substring(username.length-3) !== 'org') {
+  //     navigate('/home');
+  //   }
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isLoggedIn, username]);
   const submitForm = (e) => {
     e.preventDefault();
     if(!isEditable) {
@@ -61,16 +130,41 @@ function MyEvents() {
     }));
   };
 
-  const handleLaunch = (launchEventId, event) => {
-    setEvents(prevEvents =>
-      prevEvents.map(event =>
-        event.eventId === launchEventId
-          ? { ...event, eventLaunched: true, toDisplay: true }
-          : event
-      )
-    );
-
-    launchEvent({...event, toDisplay: true});
+  const handleLaunch = async (launchEventId, event) => {
+    try {
+      await fetch(`http://localhost:3000/api/host/${username.substring(0,username.length-3)}/edit/${launchEventId}`,
+        {
+          method: 'PUT',
+          headers: {
+              "Content-Type": "application/json"
+            },
+          credentials: 'include',
+          body: {
+            name: event.eventName,
+            venue: event.venue,
+            datetime: event.dateTime,
+            organizer: event.organiserName,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            email: event.organiserEmailId,
+            description: event.description,
+            cost: event.cost,
+            eventLaunched: true
+          }
+        }
+      );
+      setEvents(prevEvents =>
+        prevEvents.map(event =>
+          event.eventId === launchEventId
+            ? { ...event, eventLaunched: true, /*toDisplay: true*/ }
+            : event
+        )
+      );
+      launchEvent({...event, eventLaunched: true, /*toDisplay: true*/});
+    // eslint-disable-next-line no-unused-vars
+    } catch (error) {
+      throw new Error("something went wrong while uploading the event");
+    }
   }
 
   const handleEdit = (event) => {
@@ -87,6 +181,7 @@ function MyEvents() {
   }
 
   const renderedEvents = useMemo(() => {
+    console.log(events);
     return (
       <div className="space-y-4 mt-8 w-full">
         {events.length === 0 ? (
@@ -329,7 +424,18 @@ function MyEvents() {
                       className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>                  
-                  
+                    <div className="space-y-2">
+                    <label htmlFor="cost" className="block text-sm font-medium text-gray-400">Ticket Cost (₹)</label>
+                    <input 
+                      type="number" 
+                      id="cost" 
+                      name="cost" 
+                      onChange={handleChange} 
+                      value={formData.cost} 
+                      required={true}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
                   <div className="space-y-2 md:col-span-2">
                     <label htmlFor="description" className="block text-sm font-medium text-gray-400">Description</label>
                     <textarea 

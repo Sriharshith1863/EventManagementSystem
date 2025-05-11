@@ -62,31 +62,61 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import { useUserContext } from '../contexts';
 function Login({type}) {
     //TODO: remove the username and setUsername if it is not needed
-    // eslint-disable-next-line no-unused-vars
-    const {username, setIsLoggedIn, setUsername} = useUserContext();
+    const {setIsLoggedIn, setUsername} = useUserContext();
     const [usernameLocal, setUsernameLocal] = useState("");
     const [password, setPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const navigate= useNavigate();
-    const loginUser = (e) => {
+
+    const loginUser = async (e) => {
         e.preventDefault();
-        const checkUser = localStorage.getItem(usernameLocal+type);
-        const userDetails = JSON.parse(checkUser);
-        if(!checkUser) {
-            setErrorMessage("Invalid username or password");
-            setUsernameLocal("");
-            setPassword("");
+        try {
+            const res = await fetch(`http://localhost:3000/api/login`,
+                {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: usernameLocal,
+                        password,
+                        role: type
+                    })
+                }
+    
+            );
+            if (!res.ok) {
+            const msg = await res.text();
+            setErrorMessage(msg || "Login failed");
             return;
         }
-        else if(userDetails.password !== password) {//TODO: have to encrypt the password
-            setErrorMessage("Incorrect password");
-            setPassword("");
-            return;
+            setIsLoggedIn(true);
+            setUsername(usernameLocal+type);
+            setErrorMessage("");
+            navigate("/home");
+        } catch (error) {
+            setErrorMessage(error);
         }
-        setUsername(usernameLocal+type);
-        navigate("/home");
-        setIsLoggedIn(true);
-        setErrorMessage("");
+
+
+        // const checkUser = localStorage.getItem(usernameLocal+type);
+        // const userDetails = JSON.parse(checkUser);
+        // if(!checkUser) {
+        //     setErrorMessage("Invalid username or password");
+        //     setUsernameLocal("");
+        //     setPassword("");
+        //     return;
+        // }
+        // else if(userDetails.password !== password) {//TODO: have to encrypt the password
+        //     setErrorMessage("Incorrect password");
+        //     setPassword("");
+        //     return;
+        // }
+        // setUsername(usernameLocal+type);
+        // navigate("/home");
+        // setIsLoggedIn(true);
+        // setErrorMessage("");
     }
   return (
     <form onSubmit={loginUser} className="flex flex-col gap-3 flex-wrap justify-evenly bg-gray-800 text-gray-300 text-lg mx-4 p-6 rounded-lg w-full shadow-lg border border-gray-700">

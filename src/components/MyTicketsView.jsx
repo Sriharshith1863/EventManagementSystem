@@ -1,21 +1,79 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUserContext } from '../contexts';
-
+import { fetchWithRefresh } from '../utils/fetchWithRefresh';
 function MyTicketsView() {
     const { ticketId } = useParams();
     const navigate = useNavigate();
-    const { isLoggedIn } = useUserContext();
+    const { username, setUsername, setIsLoggedIn } = useUserContext();
     const ticketRef = useRef();
-
-    const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
-    const ticket = allTickets.find(ticket => ticket.ticketId === Number(ticketId));
+    const [eventToRender, setEventToRender] = useState([]);
+    //const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
+    const [ticket, setTicket] = useState({});
+    const fetchTickets = async () => {
+        try {
+            const resp = await fetch(`http://localhost:3000/api/tickets/${username.substring(0,username.length-3)}`,
+        {
+            method: 'GET',
+            credentials: 'include'
+        }
+        );
+        const response = await resp.json();
+        const allTickets = response.map(ticket => ({
+            ticketId: ticket.ticket_id,
+            eventId: ticket.event_id,
+            username: ticket.username,
+            paymentTime: ticket.payment_time,
+            cost: ticket.cost,
+            toDisplay: ticket.to_display
+        }));
+        setTicket(allTickets.filter(tickets => tickets.ticketId === ticketId));
+        const renamedEvents = response.user.events.map(event => ({
+            eventId: event.event_id,
+            eventName: event.name,
+            venue: event.venue,
+            dateTime: event.datetime,
+            organizer: event.organizerName,
+            description: event.description,
+            cost: event.cost,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            organiserEmailId: event.email,
+            eventLaunched: event.eventLaunched,
+          }));
+        setEventToRender(renamedEvents.filter(event => event.eventId === ticket.eventId));
+        } catch (error) {
+            console.log("something went wrong while fetching tickets from DB.", error);
+            throw new Error("something went wrong while fetching tickets from DB.");
+        }
+    }
 
     useEffect(() => {
-        if (!isLoggedIn) {
-            navigate('/');
+        const checkUser = async () => {
+          try {
+            const res = await fetchWithRefresh(`http://localhost:3000/api/current-user-details`,
+              {
+                method: "GET",
+                credentials: "include",
+              }
+            );
+            const response = await res.json();
+            setUsername(response.user.username+response.user.role);
+            setIsLoggedIn(true);
+            fetchTickets();
+          } catch (error) {
+            navigate('/home');
+            console.log("something went wrong while checking and fetching access and refresh tokens", error);
+            throw new Error("something went wrong while checking and fetching access and refresh tokens")
+          }
         }
-    }, [isLoggedIn, navigate]);
+        checkUser();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      },[]);
+
+    // useEffect(() => {
+
+    // }, [isLoggedIn, navigate]);
 
     const handleDownload=() => {
         window.print();
@@ -67,13 +125,14 @@ function MyTicketsView() {
                         {[
                             ['Ticket ID', ticket.ticketId],
                             ['Event ID', ticket.eventId],
-                            ['Purchase Date', ticket.PurchaseDate],
-                            ['Venue', ticket.venue],
-                            ['Date & Time', ticket.dateTime],
-                            ['Contact 1', ticket.contact1],
-                            ['Contact 2', ticket.contact2],
-                            ['Organizer Email', ticket.organiserEmailId],
-                            ['Event Creator', ticket.eventCreater]
+                            ['Event Name', eventToRender.eventName],
+                            ['Purchase Date', ticket.PaymentTime],
+                            ['Venue', eventToRender.venue],
+                            ['Date & Time', eventToRender.dateTime],
+                            ['Contact 1', eventToRender.contact1],
+                            ['Contact 2', eventToRender.contact2],
+                            ['Organizer Email', eventToRender.organiserEmailId],
+                            ['Event Creator', eventToRender.organiserName]
                         ].map(([label, value], idx) => (
                             <div
                                 key={idx}

@@ -10,48 +10,185 @@ import ParticipantList from './components/ParticipantList.jsx';
 import MyTicketsView from './components/MyTicketsView.jsx';
 import LoginChoice from './components/LoginChoice.jsx';
 import { TicketProvider } from './contexts/TicketContext.js';
-
-
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
-  const launchedEventsDetails = JSON.parse(localStorage.getItem("launchedEvents"));
-  const [launchedEvents, setLaunchedEvents] = useState(Array.isArray(launchedEventsDetails) ? launchedEventsDetails : []);
+  //const launchedEventsDetails = JSON.parse(localStorage.getItem("launchedEvents"));
+  const [launchedEvents, setLaunchedEvents] = useState([]);
   
-  const resetUserDetails = () => {
+  const resetUserDetails = async () => {
+    try {
+      await fetch(`http://localhost:3000/api/logout`,
+      {
+        method: 'POST',
+        credentials: 'include'
+      }
+    );
     setUsername("");
     setIsLoggedIn(false);
+    } catch (error) {
+      console.log("unable to logout user", error);
+      throw new Error("unable to logout user");
+    }
+
   }
-  const getUserItems = () => {
-    return JSON.parse(localStorage.getItem(username));
-  }
+  // const getUserItems = () => {
+
+  //   return JSON.parse(localStorage.getItem(username));
+  // }
   
-  const setUserItems = () => { //TODO: instead of localStorage we have to store in database
-    const userdetails = getUserItems();
-    localStorage.setItem(username, JSON.stringify({...userdetails, userEvents: events}));
-  }
+  const [events, setEvents] = useState([]);
+
+  // useEffect(() => {
+  //   const checkUser = async () => {
+  //     try {
+  //       const resp1 = await fetch(`http://localhost:3000/api/home`,
+  //         {
+  //           method: 'GET',
+  //         }
+  //       );
+  //       const resp3 = await resp1.json();
+  //       const response3 = resp3.map(event => ({
+  //           eventId: event.event_id,
+  //           eventName: event.name,
+  //           venue: event.venue,
+  //           dateTime: event.datetime,
+  //           organizerName: event.organizer,
+  //           description: event.description,
+  //           cost: event.cost,
+  //           contact1: event.contact1,
+  //           contact2: event.contact2,
+  //           organiserEmailId: event.email,
+  //           eventLaunched: event.event_launched,
+  //           eventCreator: event.organizer_username,
+  //           imageUrl: event.image
+  //       }));
+  //       setLaunchedEvents(response3);
+  //       const res = await fetchWithRefresh(`http://localhost:3000/api/current-user-details`,
+  //         {
+  //           method: "GET",
+  //           credentials: "include",
+  //         }
+  //       );
+  //       if (!res.ok) {
+  //         const text = await res.text();
+  //         console.error("Bad response from server:", res.status, text);
+  //         throw new Error(`Server responded with ${res.status}`);
+  //       }
+
+  //       const response = await res.json();
+  //       setUsername(response.user.username+response.user.role);
+  //       setIsLoggedIn(true);
+  //       if(response.user.role === 'usr') {
+  //         const renamedEvents = response.user.events.map(event => ({
+  //           eventId: event.event_id,
+  //           eventName: event.name,
+  //           venue: event.venue,
+  //           dateTime: event.datetime,
+  //           organizerName: event.organizer,
+  //           description: event.description,
+  //           cost: event.cost,
+  //           contact1: event.contact1,
+  //           contact2: event.contact2,
+  //           organiserEmailId: event.email,
+  //           eventLaunched: event.event_launched,
+  //           eventCreator: event.organizer_username,
+  //           imageUrl: event.image
+  //         }));
+  //       setEvents(renamedEvents);
+  //       }
+  //       else {
+  //         const res1 = await fetch(`http://localhost:3000/api/events/org/${response.user.username}`,
+  //           {
+  //             method: "GET",
+  //             credentials: "include",
+  //           }
+  //         );
+
+  //         if (!res1.ok) {
+  //         const text = await res1.text();
+  //         console.error("Bad response from server:", res1.status, text);
+  //         throw new Error(`Server responded with ${res1.status}`);
+  //       }
+
+  //         const response1 = await res1.json();
+  //         setEvents(response1.map(event => ({
+  //           eventId: event.event_id,
+  //           eventName: event.name,
+  //           venue: event.venue,
+  //           dateTime: event.datetime,
+  //           organizerName: event.organizer,
+  //           description: event.description,
+  //           cost: event.cost,
+  //           contact1: event.contact1,
+  //           contact2: event.contact2,
+  //           organiserEmailId: event.email,
+  //           eventLaunched: event.event_launched,
+  //           eventCreator: event.organizer_username,
+  //           imageUrl: event.image,
+  //           maxParticipants: event.max_participants,
+  //           ageLimit: event.age_limit
+  //         })));
+  //       }
+  //     } catch (error) {
+  //       console.log("Error loading the details about the user!", error);
+  //     }
+  //   }
+  //   checkUser();
+  // },[isLoggedIn]);
+
+  // const setUserItems = () => { //TODO: instead of localStorage we have to store in database
+  //   const userdetails = getUserItems();
+  //   localStorage.setItem(username, JSON.stringify({...userdetails, userEvents: events}));
+  // }
   
-  const userDetails = getUserItems();
-  const [events, setEvents] = useState(Array.isArray(userDetails?.userEvents) ? userDetails.userEvents : []);
-  useEffect(() => {
-    setEvents(Array.isArray(userDetails?.userEvents) ? userDetails.userEvents : []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[isLoggedIn]);
+  // //const userDetails = getUserItems();
+  // // useEffect(() => {
+  // //   setEvents(Array.isArray(userDetails?.userEvents) ? userDetails.userEvents : []);
+  // // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // // },[isLoggedIn]);
 
-  useEffect(() => {  //TODO: if we have to do any bigger work after adding a event, then may be this can cause problem, because it updates the localStorage after a render cycle
-    setUserItems();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[events]);
+  // useEffect(() => {  //TODO: if we have to do any bigger work after adding a event, then may be this can cause problem, because it updates the localStorage after a render cycle
+  //   setUserItems();
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // },[events]);
 
-  useEffect(() => {
-    localStorage.setItem("launchedEvents",JSON.stringify(launchedEvents));
-  },[launchedEvents]);
+  // useEffect(() => {
+  //   localStorage.setItem("launchedEvents",JSON.stringify(launchedEvents));
+  // },[launchedEvents]);
 
-  const createEvent = (event) => {
-    setEvents(prev => [...prev, {...event,
-      currentParticipants:0
-    }]);
+  const createEvent = async (event) => {
 
+    try {
+      await fetch(`http://localhost:3000/api/host/${username.substring(0,username.length-3)}`,
+    {
+      method: "POST",
+      headers: {
+              "Content-Type": "application/json"
+            },
+      credentials: "include",
+      body: JSON.stringify({
+        event_id: event.eventId,
+        name: event.eventName,
+        venue: event.venue,
+        datetime: event.dateTime,
+        organizer: event.organiserName,
+        contact1: event.contact1,
+        contact2: event.contact2,
+        email: event.organiserEmailId,
+        description: event.description,
+        cost: event.cost,
+        organizer_username: event.eventCreator,
+        image: event.imageUrl,
+        age_limit: event.ageLimit,
+        max_participants: event.maxLimit,
+      })
+    }
+  )
+  setEvents(prev => [...prev, event]);
+    } catch (error) {
+      console.log("something went wrong while creating an event", error);
+    }
     // setEvents((prev) => (
     //   prev.push({eventId: dateNow, ...event})
     //shouldn't do state mutation
@@ -59,55 +196,130 @@ function App() {
   }
 
   const launchEvent = (event) => {
-    setLaunchedEvents(prev => [...prev, {
-      ...event,
-      currentParticipants: event.currentParticipants || 0
-    }]);
+    setLaunchedEvents(prev => [...prev, event]);
   }
 
-  const deleteEvent = (deleteEventId) => {
+  const deleteEvent = async (deleteEventId) => {
+    try {
+      await fetch(`http://localhost:3000/api/events/delete/${deleteEventId}`,
+        {
+          method: 'DELETE',
+          credentials: "include"
+        }
+      );
     setEvents(prevEvents => prevEvents.filter(event => event.eventId !== deleteEventId));
     setLaunchedEvents(prevlaunchedEvents => prevlaunchedEvents.filter(event => event.eventId !== deleteEventId));
+    // eslint-disable-next-line no-unused-vars
+    } catch (error) {
+      throw new Error("something went wrong while deleting an event");
+    }
   }
 
-  const editEvent = (event) => {
+  const editEvent = async (event) => {
+
+    await fetch(`http://localhost:3000/api/host/${username}/edit/${event.eventId}`,
+        {
+          method: 'PUT',
+          headers: {
+              "Content-Type": "application/json"
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: event.eventName,
+            venue: event.venue,
+            datetime: event.dateTime,
+            organizer: event.organiserName,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            email: event.organiserEmailId,
+            description: event.description,
+            cost: event.cost,
+            eventLaunched: event.eventLaunched
+          })
+        }
+      );
     setEvents(prev => prev.map(prevEvent => prevEvent.eventId === event.eventId ? event : prevEvent));
   }
 
-  const addEvent = (event) => {
-    setEvents((prevEvents) => [...prevEvents, {...event}]);
+  const addEvent = async (event) => {
+    try {
+      await fetch(`http://localhost:3000/api/events/${event.eventId}/join/${username.substring(0,username.length-3)}`,
+      {
+        method: 'POST',
+        headers: {
+              "Content-Type": "application/json"
+            },
+        credentials: 'include',
+        body: JSON.stringify({
+          ticket_id: Date.now(),
+          payment_time: Date.now(),
+          cost: event.cost,
+          toDisplay: true
+        })
+      }
+    );
+      setEvents((prevEvents) => [...prevEvents, event]);
+    } catch (error) {
+      console.log("something went wrong while making a user join an event.",error);
+      throw new Error("something went wrong while making a user join an event.");
+    }
   };
 
-  const removeEvent = (eventId) => {
-    setEvents((prevEvents) => prevEvents.filter((event) => event.eventId !== eventId));
+  const removeEvent = async (eventId) => {
+    try {
+      await fetch(`http://localhost:3000/api/tickets/disable/${eventId}`,
+        {
+          method: 'PUT',
+          credentials: 'include'
+        }
+      );
+    } catch (error) {
+      console.log("error disabling a ticket", error);
+      throw new Error("error disabling a ticket");
+    }
+    //setEvents((prevEvents) => prevEvents.map((event) => event.eventId === eventId));
   };
 
   const deleteTicket = () => {
 
   };
 
-  const isEventFull = (event) => {
-    return event.currentParticipants >= event.maxLimit
+  const isEventFull = async (event) => {
+    let currentParticipants;
+    try {
+      const resp = await fetch(`http://localhost:3000/api/events/${event.eventId}/participants`,
+        {
+          method: 'GET',
+          credentials: 'include'
+        }
+      );
+      const response = await resp.json();
+      currentParticipants = (response.participants).length;
+    } catch (error) {
+      console.log("unable to get the participants count", error);
+      throw new Error("unable to get the participants count");
+    }
+    return currentParticipants >= event.maxLimit
   };
 
-  const updateParticipantCnt = (event, increment) => {
-    // Update in events array
-    setEvents(prevEvents => prevEvents.map(e => 
-      e.eventId === event.eventId 
-        ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
-        : e
-    ));
+  // const updateParticipantCnt = (event, increment) => {
+  //   // Update in events array
+  //   setEvents(prevEvents => prevEvents.map(e => 
+  //     e.eventId === event.eventId 
+  //       ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
+  //       : e
+  //   ));
     
-    // Update in launchedEvents array
-    setLaunchedEvents(prevEvents => prevEvents.map(e => 
-      e.eventId === event.eventId 
-        ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
-        : e
-    ));
-  }
+  //   // Update in launchedEvents array
+  //   setLaunchedEvents(prevEvents => prevEvents.map(e => 
+  //     e.eventId === event.eventId 
+  //       ? { ...e, currentParticipants: (e.currentParticipants || 0) + increment, toDisplay: e.currentParticipants < e.maxLimit }
+  //       : e
+  //   ));
+  // }
 
   return (
-    <EventProvider value={{events, createEvent, launchEvent, setEvents, deleteEvent, editEvent, updateParticipantCnt, isEventFull}}>
+    <EventProvider value={{events, createEvent, launchEvent, setEvents, deleteEvent, editEvent, /*updateParticipantCnt,*/ isEventFull, setLaunchedEvents, launchedEvents}}>
       <UserProvider value={{username, isLoggedIn, setIsLoggedIn, setUsername, resetUserDetails,addEvent,removeEvent}}>
         <TicketProvider value={{deleteTicket}}>
           <BrowserRouter> {/*changed from createBrowserRouter to browser router because createbrowser router won't allow dynamic routes, which we want for different event pages*/}

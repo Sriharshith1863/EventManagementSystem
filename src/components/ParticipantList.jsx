@@ -3,7 +3,20 @@ import { useParams } from 'react-router-dom';
 
 function ParticipantList() {
     const { eventId } = useParams();
-    const allTickets = JSON.parse(localStorage.getItem('tickets')) || [];
+    const fetchTickets = async () => {
+        const resp = await fetch(`http://localhost:3000/api/allTickets`,
+            {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: 'include'
+            }
+        );
+        const response = await resp.json();
+        return response;
+    }
+    const allTickets = fetchTickets();
     const eventTickets = allTickets.filter(ticket => ticket.eventId === Number(eventId));
 
     return (

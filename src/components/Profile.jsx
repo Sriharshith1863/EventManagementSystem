@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useUserContext } from '../contexts'
-
+import { fetchWithRefresh } from '../utils/fetchWithRefresh';
 function Profile() {
-  const { username, isLoggedIn, userEvents } = useUserContext();
+  const { username, isLoggedIn, setUsername, setIsLoggedIn } = useUserContext();
   const [email, setEmail] = useState("");
   const [phoneNo, setPhoneNo] = useState("");
   const [isEditable, setIsEditable] = useState(false);
@@ -22,38 +22,96 @@ function Profile() {
   }
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/signUp');
-    }
-    const loadDetails = JSON.parse(localStorage.getItem(username));
-    if (!loadDetails) {
-      navigate('/signUp');
-    }
-    if (loadDetails.email) {
-      setEmail(loadDetails.email);
-    }
-    if (loadDetails.phoneNumber) {
-      setPhoneNo(loadDetails.phoneNumber);
-    }
-    if (loadDetails.dob) {
-      setDob(loadDetails.dob);
-    }
+
+    const checkUser = async () => {
+          try {
+            const res = await fetchWithRefresh(`http://localhost:3000/api/current-user-details`,
+              {
+                method: "GET",
+                credentials: "include",
+              }
+            );
+            const response = await res.json();
+            const loadDetails = response;
+            setUsername(loadDetails.user.username+loadDetails.user.role);
+            setIsLoggedIn(true);
+            console.log(loadDetails);
+            
+
+              // const loadDetails = JSON.parse(localStorage.getItem(username));
+              if (!loadDetails) {
+                navigate('/signUp');
+              }
+              if (loadDetails.user.email) {
+                setEmail(loadDetails.user.email);
+              }
+              if (loadDetails.user.phone_no) {
+                setPhoneNo(loadDetails.user.phone_no);
+              }
+              if (loadDetails.user.dob) {
+                setDob(loadDetails.user.dob.split('T')[0]);
+              }
+          } catch (error) {
+            if (!isLoggedIn) {
+              navigate('/signUp');
+            }
+            throw new Error("something went wrong while loading user details", error);
+          }
+        }
+        checkUser();
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const editProfile = (e) => {
+  const editProfile = async (e) => {
     e.preventDefault();
+    //let userDetails;
     if (isEditable) {
-      let userDetails = localStorage.getItem(username);
-      if (!userDetails) {
-        displayMessage("Something went wrong...", "text-red-500");
-      }
-      else {
-        userDetails = JSON.parse(userDetails);
-        localStorage.setItem(username, JSON.stringify({ ...userDetails, email: email, phoneNumber: phoneNo, dob: dob, userEvents}));
+      // try {
+      //   const res1 = await fetch('http://localhost:3000/current-user-details',
+      //             {
+      //               method: 'GET',
+      //               credentials: "include"
+      //             }
+      //           );
+      //   const response1 = await res1.json();
+      //   userDetails = response1.data;
+      // // eslint-disable-next-line no-unused-vars
+      // } catch (error) {
+      //   displayMessage("something went wrong while fetching the details", "text-red-500");
+      //   throw new Error("something went wrong while fetching the details");
+      // }
+      // //let userDetails = localStorage.getItem(username);
+      // if (!userDetails) {
+      //   displayMessage("Something went wrong...", "text-red-500");
+      // }
+      // else {
+        // userDetails = JSON.parse(userDetails);
+        try {
+          await fetch(`http://localhost:3000/users/${username.substring(0, username.length-3)}`,
+            {
+              method: "POST",
+              headers: {
+              "Content-Type": "application/json"
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                email,
+                dob,
+                phoneNo
+              })
+            }
+          );
         setIsEditable(false);
         displayMessage("Profile successfully edited!", "text-green-500");
-      }
+        // eslint-disable-next-line no-unused-vars
+        } catch (error) {
+          displayMessage("something went wrong while editing the details", "text-red-500");
+        }
+        // localStorage.setItem(username, JSON.stringify({ ...userDetails, email: email, phoneNumber: phoneNo, dob: dob, userEvents}));
+        // setIsEditable(false);
+        // displayMessage("Profile successfully edited!", "text-green-500");
+      //}
     }
     else {
       setIsEditable((prev) => !prev);

@@ -1,12 +1,138 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom';
-
-function Home({eventsToRender = []}) {
+import { useEffect } from 'react';
+import { useNavigate, } from 'react-router-dom';
+import { useEventContext, useUserContext } from '../contexts';
+import { fetchWithRefresh } from '../utils/fetchWithRefresh';
+function Home(/*{eventsToRender = []}*/) {
   const navigate = useNavigate();
-  const availableEvents = eventsToRender
-  .filter(event => 
-    event.toDisplay === true
-  );
+  const {setUsername, setIsLoggedIn} = useUserContext();
+  const {setEvents, setLaunchedEvents, launchedEvents} = useEventContext();
+  const availableEvents = launchedEvents;
+
+  // useEffect(() => {
+  //   const checkUser = async () => {
+  //     try {
+  //       const res = await fetchWithRefresh(`http://localhost:3000/api/current-user-details`,
+  //         {
+  //           method: "GET",
+  //           credentials: "include",
+  //         }
+  //       );
+  //       if (!res.ok) {
+  //         const text = await res.text();
+  //         console.error("Bad response from server:", res.status, text);
+  //         throw new Error(`Server responded with ${res.status}`);
+  //       }
+  //       const response = await res.json();
+  //       setUsername(response.user.username+response.user.role);
+  //       setIsLoggedIn(true);
+  //     } catch (error) {
+  //       console.log("something went wrong while checking and fetching access and refresh tokens", error);
+  //     }
+  //   }
+  //   checkUser();
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // },[]);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const resp1 = await fetch(`http://localhost:3000/api/home`,
+          {
+            method: 'GET',
+          }
+        );
+        const resp3 = await resp1.json();
+        const response3 = resp3.map(event => ({
+            eventId: event.event_id,
+            eventName: event.name,
+            venue: event.venue,
+            dateTime: event.datetime,
+            organizerName: event.organizer,
+            description: event.description,
+            cost: event.cost,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            organiserEmailId: event.email,
+            eventLaunched: event.event_launched,
+            eventCreator: event.organizer_username,
+            imageUrl: event.image
+        }));
+        setLaunchedEvents(response3.filter(event => event.eventLaunched === true));
+        const res = await fetch(`http://localhost:3000/api/current-user-details`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Bad response from server:", res.status, text);
+          throw new Error(`Server responded with ${res.status}`);
+        }
+
+        const response = await res.json();
+        setUsername(response.user.username+response.user.role);
+        setIsLoggedIn(true);
+        if(response.user.role === 'usr') {
+          const renamedEvents = response.user.events.map(event => ({
+            eventId: event.event_id,
+            eventName: event.name,
+            venue: event.venue,
+            dateTime: event.datetime,
+            organizerName: event.organizer,
+            description: event.description,
+            cost: event.cost,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            organiserEmailId: event.email,
+            eventLaunched: event.event_launched,
+            eventCreator: event.organizer_username,
+            imageUrl: event.image
+          }));
+        setEvents(renamedEvents);
+        }
+        else {
+          const res1 = await fetch(`http://localhost:3000/api/events/org/${response.user.username}`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+
+          if (!res1.ok) {
+          const text = await res1.text();
+          console.error("Bad response from server:", res1.status, text);
+          throw new Error(`Server responded with ${res1.status}`);
+        }
+
+          const response1 = await res1.json();
+          setEvents(response1.map(event => ({
+            eventId: event.event_id,
+            eventName: event.name,
+            venue: event.venue,
+            dateTime: event.datetime,
+            organizerName: event.organizer,
+            description: event.description,
+            cost: event.cost,
+            contact1: event.contact1,
+            contact2: event.contact2,
+            organiserEmailId: event.email,
+            eventLaunched: event.event_launched,
+            eventCreator: event.organizer_username,
+            imageUrl: event.image,
+            maxParticipants: event.max_participants,
+            ageLimit: event.age_limit
+          })));
+        }
+      } catch (error) {
+        console.log("Error loading the details about the user!", error);
+      }
+    }
+    checkUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
   return (
     <div className='min-h-screen bg-gray-900 text-gray-100 py-8 px-4'>
       <div className="w-full">

@@ -16,19 +16,21 @@ export const EventContext = createContext({
       imageUrl: "/defaultAvatar.webp",
       eventCreater: "event owner",
       eventLaunched: false,
-      toDisplay: true,
       ageLimit: 0,
       maxLimit : 0,
-      currentParticipants: 0
+      cost: 0
       //TODO: add the images here after starting backend
     }
   ],
   createEvent: (event) => {},
   launchEvent: (event) => {},
   setEvents: (event) => {},
+  addEvent: (event) => {},
   deleteEvent: (eventId) => {},
   editEvent: (event) => {},
-  updateParticipantCnt: (eventId, increment) => {},
+  launchedEvents: [],
+  setLaunchedEvents: (event) => {},
+  // updateParticipantCnt: (eventId, increment) => {},
   isEventFull: (event) => {}
 })
 
