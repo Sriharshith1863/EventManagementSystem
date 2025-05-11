@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useUserContext } from '../contexts';
+import {useUserContext } from '../contexts';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithRefresh } from '../utils/fetchWithRefresh';
 function MyTickets() {
@@ -62,6 +62,7 @@ function MyTickets() {
     
   // };
 
+  
   const handleDeleteEvent = (eventId) => {
     // Update the toDisplay property for the specific event
     setUserEvents(prevEvents => prevEvents.map(event => 
@@ -88,11 +89,23 @@ function MyTickets() {
 
   return (
     <>
-      <div className="bg-gray-800 p-4">MyTickets</div>
-      <div className="bg-gray-800 p-4">
-        <h1 className="text-2xl font-bold text-white mb-4">My Tickets</h1>
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 shadow-md">
+          <h1 className="text-3xl font-extrabold text-white tracking-wide">🎟 MyTickets</h1>
+        </div>
+      <div className="bg-gray-900 p-8 min-h-screen">
+        <h1 className="text-3xl font-bold text-white mb-6 text-center drop-shadow-md">My Tickets</h1>
         {userEvents.length === 0 ? (
-          <p className="text-gray-300">No tickets found.</p>
+          <div className='bg-gray-900 rounded-lg p-4 h-96 flex flex-col justify-center items-center'>
+            <p className="text-gray-300 text-center">No tickets found.</p>
+            <div className="flex justify-center mt-4">
+              <button 
+                className='bg-blue-600 hover:bg-blue-800 transition-colors cursor-pointer px-3 py-2 rounded-lg'
+                onClick={() => navigate('/Home')}
+              >
+                Browse Events
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {userEvents.map((event) => (
